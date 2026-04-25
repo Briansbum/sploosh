@@ -14,7 +14,7 @@ set -euo pipefail
 MODPACK="${1:?Usage: register-ami.sh <modpack> <nix-result-path>}"
 NIX_RESULT="${2:?Usage: register-ami.sh <modpack> <nix-result-path>}"
 REGION="${AWS_REGION:-eu-west-2}"
-BUCKET="${S3_BUCKET:-bread-minecraft-backups}"
+BUCKET="${S3_BUCKET:-sploosh-minecraft-backups}"
 
 # nixos-generators amazon format produces a .vhd file
 VHD=$(find "$NIX_RESULT" -name "*.vhd" -o -name "nixos-amazon-image-*.vhd" | head -1)

@@ -67,7 +67,7 @@ jobs:
 
       - name: Register AMI
         env:
-          S3_BUCKET: bread-minecraft-backups
+          S3_BUCKET: sploosh-minecraft-backups
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           CF_WORKER_SECRET: ${{ secrets.CF_WORKER_SECRET }}
         run: |

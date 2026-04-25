@@ -3,10 +3,10 @@
 #
 # Expected user-data JSON (base64-decoded by cloud-init):
 #   {
-#     "modpack":       "all-the-forge-10",
+#     "modpack":       "create-central",
 #     "rcon_password": "...",
-#     "s3_bucket":     "bread-minecraft-backups",
-#     "s3_prefix":     "all-the-forge-10/restic",
+#     "s3_bucket":     "sploosh-minecraft-backups",
+#     "s3_prefix":     "create-central/restic",
 #     "restic_password": "..."
 #   }
 { pkgs, lib, ... }:
@@ -27,7 +27,7 @@ let
 
       USERDATA=$(curl -sf http://169.254.169.254/latest/user-data 2>/dev/null || echo "{}")
       RCON_PASSWORD=$(echo "$USERDATA" | jq -r '.rcon_password // ""')
-      S3_BUCKET=$(echo    "$USERDATA" | jq -r '.s3_bucket // "bread-minecraft-backups"')
+      S3_BUCKET=$(echo    "$USERDATA" | jq -r '.s3_bucket // "sploosh-minecraft-backups"')
       S3_PREFIX=$(echo    "$USERDATA" | jq -r '.s3_prefix // "default/restic"')
       RESTIC_PASS=$(echo  "$USERDATA" | jq -r '.restic_password // ""')
       MODPACK=$(echo      "$USERDATA" | jq -r '.modpack // "default"')
@@ -83,7 +83,7 @@ in
     description = "Minecraft server bootstrap";
     wantedBy = [ "multi-user.target" ];
     # Runs before all minecraft-server-* services
-    before = [ "minecraft-server-all-the-forge-10.service" ];
+    before = [ "minecraft-server-create-central.service" ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -92,7 +92,7 @@ in
   };
 
   # Propagate the env file to all minecraft server services
-  systemd.services."minecraft-server-all-the-forge-10" = {
+  systemd.services."minecraft-server-create-central" = {
     after = [ "mc-bootstrap.service" ];
     requires = [ "mc-bootstrap.service" ];
     serviceConfig.EnvironmentFile = [ "-/run/minecraft/env" ];

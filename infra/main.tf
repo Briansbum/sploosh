@@ -8,7 +8,7 @@ terraform {
   }
   # Use a local backend for now; swap to S3 backend once the bucket exists
   # backend "s3" {
-  #   bucket = "bread-minecraft-backups"
+  #   bucket = "sploosh-minecraft-backups"
   #   key    = "terraform/state"
   #   region = var.aws_region
   # }
@@ -20,9 +20,8 @@ provider "aws" {
 
 # ── S3 ─────────────────────────────────────────────────────────────────────────
 
-# Import the existing bucket: tofu import aws_s3_bucket.backups bread-minecraft-backups
 resource "aws_s3_bucket" "backups" {
-  bucket = "bread-minecraft-backups"
+  bucket = "sploosh-minecraft-backups"
 }
 
 resource "aws_s3_bucket_versioning" "backups" {
@@ -138,7 +137,7 @@ resource "aws_iam_access_key" "cf_worker" {
 
 resource "aws_security_group" "minecraft" {
   name        = "sploosh-minecraft"
-  description = "Minecraft server — port 25565 added per-user by the Discord bot"
+  description = "Minecraft server - port 25565 added per-user by the Discord bot"
   vpc_id      = var.vpc_id
 
   # SSH from operator only
@@ -276,7 +275,7 @@ data "aws_availability_zones" "available" {
 
 # ── AMI import pipeline ────────────────────────────────────────────────────────
 # CI builds the NixOS AMI with nixos-generators, converts to vmdk,
-# uploads to s3://bread-minecraft-backups/ami-staging/<modpack>/<sha>.vmdk,
+# uploads to s3://sploosh-minecraft-backups/ami-staging/<modpack>/<sha>.vmdk,
 # then calls:
 #   aws ec2 import-snapshot --disk-container file://container.json
 #   aws ec2 register-image ...
