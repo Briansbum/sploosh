@@ -14,6 +14,9 @@ export interface Env {
   // Internal security
   ADMIN_SECRET: string;
   IDLE_WEBHOOK_SECRET: string;
+
+  // Comma-separated list of Discord guild IDs permitted to use this bot
+  ALLOWED_GUILD_IDS: string;
 }
 
 export interface Modpack {

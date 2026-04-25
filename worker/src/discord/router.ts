@@ -28,6 +28,12 @@ export async function handleInteraction(
   }
 
   if (interaction.type === APPLICATION_COMMAND) {
+    const guildId = interaction.guild_id as string | undefined;
+    const allowed = env.ALLOWED_GUILD_IDS.split(",").map((s) => s.trim());
+    if (!guildId || !allowed.includes(guildId)) {
+      return json({ type: 4, data: { content: "This bot is private.", flags: 64 } });
+    }
+
     const name = interaction.data?.name as string;
     const userId = interaction.member?.user?.id ?? interaction.user?.id ?? "unknown";
 
