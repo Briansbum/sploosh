@@ -5,10 +5,12 @@ import { handleStart } from "../commands/start";
 import { handleStop } from "../commands/stop";
 import { handleAllowlist } from "../commands/allowlist";
 import { handleRevoke } from "../commands/revoke";
+import { listModpacks } from "../db";
 import type { Env } from "../types";
 
 const PING = 1;
 const APPLICATION_COMMAND = 2;
+const APPLICATION_COMMAND_AUTOCOMPLETE = 4;
 
 export async function handleInteraction(
   req: Request,
@@ -25,6 +27,16 @@ export async function handleInteraction(
   // Acknowledge Discord's ping
   if (interaction.type === PING) {
     return json({ type: 1 });
+  }
+
+  if (interaction.type === APPLICATION_COMMAND_AUTOCOMPLETE) {
+    const packs = await listModpacks(env);
+    const focused = (interaction.data?.options as Array<{ name: string; value: string; focused?: boolean }> | undefined)
+      ?.find((o) => o.focused)?.value ?? "";
+    const choices = packs
+      .filter((p) => p.name.includes(focused) || p.display_name.toLowerCase().includes(focused.toLowerCase()))
+      .map((p) => ({ name: p.display_name, value: p.name }));
+    return json({ type: 8, data: { choices } });
   }
 
   if (interaction.type === APPLICATION_COMMAND) {
