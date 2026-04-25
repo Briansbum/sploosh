@@ -167,15 +167,10 @@ resource "aws_security_group" "minecraft" {
 
 locals {
   modpacks = {
-    all-the-forge-10 = {
-      ami_id       = var.ami_ids["all-the-forge-10"]
-      s3_prefix    = "all-the-forge-10/restic"
-      display_name = "All The Forge 10"
-    }
-    jaffa-factory-2 = {
-      ami_id       = var.ami_ids["jaffa-factory-2"]
-      s3_prefix    = "jaffa-factory-2/restic"
-      display_name = "Jaffa Factory 2"
+    create-central = {
+      ami_id       = lookup(var.ami_ids, "create-central", "ami-00000000000000000")
+      s3_prefix    = "create-central/restic"
+      display_name = "Create Central"
     }
   }
 }
