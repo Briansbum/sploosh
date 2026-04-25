@@ -21,21 +21,25 @@ variable "operator_cidr" {
 }
 
 variable "instance_types" {
-  description = "EC2 instance types to pool across in the Fleet (memory-optimised)"
+  description = "EC2 instance types to pool across in the Fleet (all 32 GiB, spot ~$0.04-0.12/hr in eu-west-2)"
   type        = list(string)
   default = [
-    "r6a.xlarge",   # 32 GB, AMD, ~$0.06/h spot
-    "r7a.xlarge",   # 32 GB, AMD Zen4
-    "r6i.xlarge",   # 32 GB, Intel
-    "m6a.2xlarge",  # 32 GB, AMD (more CPU)
-    "m7a.2xlarge",
+    # r-family xlarge: 32 GiB, 4 vCPU — memory-optimised, lowest spot price
+    "r5.xlarge",    # Intel Cascade Lake, large pool
+    "r5a.xlarge",   # AMD EPYC, separate spot pool
+    "r5n.xlarge",   # Intel, higher network bandwidth
+    "r6i.xlarge",   # Intel Ice Lake
+    # m-family 2xlarge: 32 GiB, 8 vCPU — extra CPU for mod-heavy packs
+    "m5.2xlarge",   # Intel, very large pool
+    "m5a.2xlarge",  # AMD, large pool
+    "m6i.2xlarge",  # Intel Ice Lake
+    "m6a.2xlarge",  # AMD EPYC
   ]
 }
 
 variable "ami_ids" {
   description = "Per-modpack AMI IDs, updated by CI after each ami.yml run"
   type        = map(string)
-  default     = {} # populated by CI via workspace variable or tfvars
 }
 
 variable "rcon_password" {
