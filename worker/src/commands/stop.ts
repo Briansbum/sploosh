@@ -1,11 +1,12 @@
 import { getModpack, getServerState, setServerStatus } from "../db";
 import { setFleetCapacity } from "../aws/ec2";
+import { checkRateLimit } from "../ratelimit";
 import type { Env } from "../types";
 
 export async function handleStop(
   interaction: Record<string, unknown>,
   env: Env,
-  _userId: string,
+  userId: string,
 ): Promise<Response> {
   const options = (interaction.data as Record<string, unknown>)?.options as
     | Array<{ name: string; value: unknown }>
@@ -14,6 +15,14 @@ export async function handleStop(
 
   if (!modpackName) {
     return Response.json({ type: 4, data: { content: "Usage: `/stop modpack:<name>`", flags: 64 } });
+  }
+
+  const rl = await checkRateLimit(env, userId, "stop");
+  if (rl.limited) {
+    return Response.json({
+      type: 4,
+      data: { content: `You're doing that too fast. Try again in ${rl.retryAfterSec}s.`, flags: 64 },
+    });
   }
 
   const [modpack, state] = await Promise.all([

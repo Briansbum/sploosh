@@ -30,8 +30,16 @@ CREATE TABLE IF NOT EXISTS allowlist (
   PRIMARY KEY (modpack, discord_user_id)
 );
 
+CREATE TABLE IF NOT EXISTS rate_limits (
+  user_id      TEXT NOT NULL,
+  command      TEXT NOT NULL,
+  attempts     INTEGER NOT NULL DEFAULT 1,
+  window_start INTEGER NOT NULL,
+  PRIMARY KEY (user_id, command)
+);
+
 -- Seed modpacks (update ami_id/fleet_id/sg_id after tofu apply)
 INSERT OR IGNORE INTO modpacks (name, display_name, s3_prefix, mrpack_url, pack_toml_url)
-VALUES ('all-the-forge-10', 'All The Forge 10', 'all-the-forge-10/restic', '', '');
+VALUES ('create-central', 'Create Central', 'create-central/restic', '', '');
 
-INSERT OR IGNORE INTO server_state (modpack, status) VALUES ('all-the-forge-10', 'stopped');
+INSERT OR IGNORE INTO server_state (modpack, status) VALUES ('create-central', 'stopped');

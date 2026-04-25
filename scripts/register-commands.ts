@@ -30,11 +30,13 @@ const commands = [
     name: "start",
     description: "Start a Minecraft server",
     options: [MODPACK_OPTION],
+    default_member_permissions: "0",  // hidden from everyone by default; grant via role in Server Settings
   },
   {
     name: "stop",
     description: "Stop a Minecraft server (saves world first)",
     options: [MODPACK_OPTION],
+    default_member_permissions: "0",
   },
   {
     name: "allowlist",
