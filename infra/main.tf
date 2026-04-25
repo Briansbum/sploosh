@@ -47,6 +47,56 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   }
 }
 
+# ── IAM — vmimport service role (required for ec2 import-snapshot) ────────────
+# Must be named exactly "vmimport"; AWS VM Import/Export service assumes it.
+
+resource "aws_iam_role" "vmimport" {
+  name = "vmimport"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "vmie.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+      Condition = {
+        StringEquals = { "sts:ExternalId" = "vmimport" }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "vmimport" {
+  name = "vmimport-policy"
+  role = aws_iam_role.vmimport.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetBucketLocation",
+          "s3:GetObject",
+          "s3:ListBucket",
+        ]
+        Resource = [
+          aws_s3_bucket.backups.arn,
+          "${aws_s3_bucket.backups.arn}/*",
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:ModifySnapshotAttribute",
+          "ec2:CopySnapshot",
+          "ec2:RegisterImage",
+          "ec2:Describe*",
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # ── IAM — GitHub Actions OIDC ─────────────────────────────────────────────────
 # If this provider already exists in your account, import it:
 #   tofu import aws_iam_openid_connect_provider.github arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com
