@@ -39,7 +39,14 @@ export async function handleStop(
 
   // Set fleet capacity to 0; the instance will receive a termination notice,
   // the spot handler and watchdog will take a final backup before the instance goes.
-  await setFleetCapacity(env, modpack.fleet_id, 0);
+  try {
+    await setFleetCapacity(env, modpack.fleet_id, 0);
+  } catch (e) {
+    return Response.json({
+      type: 4,
+      data: { content: `❌ Failed to stop **${modpack.display_name}**: ${String(e)}`, flags: 64 },
+    });
+  }
   await setServerStatus(env, modpackName, "stopping");
 
   return Response.json({

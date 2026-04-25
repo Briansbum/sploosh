@@ -2,6 +2,16 @@
 import { signRequest } from "./sigv4";
 import type { Env } from "../types";
 
+export class EC2Error extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "EC2Error";
+  }
+}
+
 function ec2Creds(env: Env) {
   return {
     accessKeyId: env.AWS_ACCESS_KEY_ID,
@@ -25,7 +35,11 @@ async function ec2Query(env: Env, params: Record<string, string>): Promise<strin
   );
   const res = await fetch(req);
   const text = await res.text();
-  if (!res.ok) throw new Error(`EC2 error ${res.status}: ${text}`);
+  if (!res.ok) {
+    const code = xmlTag(text, "Code") ?? "Unknown";
+    const message = xmlTag(text, "Message") ?? `HTTP ${res.status}`;
+    throw new EC2Error(code, message);
+  }
   return text;
 }
 
@@ -34,13 +48,61 @@ function xmlTag(xml: string, tag: string): string | null {
   return m ? m[1].trim() : null;
 }
 
+interface FleetInfo {
+  state: string;
+  activityStatus: string;
+}
+
+async function describeFleet(env: Env, fleetId: string): Promise<FleetInfo | null> {
+  try {
+    const xml = await ec2Query(env, { Action: "DescribeFleets", "FleetId.1": fleetId });
+    return {
+      state: xmlTag(xml, "fleetState") ?? "unknown",
+      activityStatus: xmlTag(xml, "activityStatus") ?? "unknown",
+    };
+  } catch {
+    return null;
+  }
+}
+
+function fleetStateMessage(info: FleetInfo, requestedCapacity: number): string | null {
+  const { state, activityStatus } = info;
+  if (state === "modifying") {
+    return "A fleet modification is already in progress — try again in a moment.";
+  }
+  if (state === "delete-requested" || state === "deleted") {
+    return "The fleet has been deleted and cannot accept modifications.";
+  }
+  if (state === "failed") {
+    return "The fleet is in a failed state and cannot be modified.";
+  }
+  if (activityStatus === "pending-termination") {
+    return requestedCapacity > 0
+      ? "Spot instances are currently being terminated — wait for shutdown to complete before restarting."
+      : "Spot instances are already being terminated.";
+  }
+  if (activityStatus === "pending-fulfillment" && requestedCapacity > 0) {
+    return "Fleet is already waiting for instances to launch.";
+  }
+  return null;
+}
+
 /** Set EC2 Fleet target capacity (0=stop, 1=start) */
 export async function setFleetCapacity(env: Env, fleetId: string, capacity: number): Promise<void> {
-  await ec2Query(env, {
-    Action: "ModifyFleet",
-    FleetId: fleetId,
-    "TargetCapacitySpecification.TotalTargetCapacity": String(capacity),
-  });
+  try {
+    await ec2Query(env, {
+      Action: "ModifyFleet",
+      FleetId: fleetId,
+      "TargetCapacitySpecification.TotalTargetCapacity": String(capacity),
+    });
+  } catch (e) {
+    const info = await describeFleet(env, fleetId);
+    if (info) {
+      const msg = fleetStateMessage(info, capacity);
+      if (msg) throw new Error(msg);
+    }
+    throw e;
+  }
 }
 
 /** Get the running instance for a fleet (returns null if no instance yet) */
