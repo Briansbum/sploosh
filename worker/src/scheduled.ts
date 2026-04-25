@@ -2,7 +2,7 @@
 // 1. Reconcile server_state against EC2 Fleet/DescribeInstances
 // 2. Sweep expired allowlist entries and revoke their SG rules
 import { listModpacks, getServerState, setServerStatus, getExpiredAllowlist, removeAllowlist } from "./db";
-import { getFleetInstance, revokeSgIngress, authorizeSgIngress } from "./aws/ec2";
+import { getFleetInstance, describeFleet, revokeSgIngress, authorizeSgIngress } from "./aws/ec2";
 import type { Env } from "./types";
 
 export async function handleScheduled(env: Env): Promise<void> {
@@ -15,11 +15,20 @@ async function reconcileServers(env: Env): Promise<void> {
   for (const mp of modpacks) {
     if (!mp.fleet_id) continue;
 
-    const state = await getServerState(env, mp.name);
-    const instance = await getFleetInstance(env, mp.fleet_id);
+    const [state, instance, fleetInfo] = await Promise.all([
+      getServerState(env, mp.name),
+      getFleetInstance(env, mp.fleet_id),
+      describeFleet(env, mp.fleet_id),
+    ]);
 
-    if (instance?.publicIp) {
-      // Fleet has a running instance
+    const fleetWindingDown =
+      fleetInfo?.state === "request-canceled-and-instance-running" ||
+      fleetInfo?.state === "delete-requested" ||
+      fleetInfo?.state === "deleted" ||
+      fleetInfo?.activityStatus === "pending-termination";
+
+    if (instance?.publicIp && !fleetWindingDown) {
+      // Fleet has a running instance and is healthy
       if (state?.status !== "running" || state.instance_id !== instance.instanceId) {
         await setServerStatus(env, mp.name, "running", instance.instanceId, instance.publicIp);
 
@@ -40,6 +49,11 @@ async function reconcileServers(env: Env): Promise<void> {
             // Continue — individual IP errors shouldn't block the rest
           }
         }
+      }
+    } else if (instance?.publicIp && fleetWindingDown) {
+      // Instance still up but fleet is cancelling — mark stopping so status is accurate
+      if (state?.status !== "stopping") {
+        await setServerStatus(env, mp.name, "stopping");
       }
     } else {
       // No running instance

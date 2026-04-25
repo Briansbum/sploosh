@@ -48,12 +48,12 @@ function xmlTag(xml: string, tag: string): string | null {
   return m ? m[1].trim() : null;
 }
 
-interface FleetInfo {
+export interface FleetInfo {
   state: string;
   activityStatus: string;
 }
 
-async function describeFleet(env: Env, fleetId: string): Promise<FleetInfo | null> {
+export async function describeFleet(env: Env, fleetId: string): Promise<FleetInfo | null> {
   try {
     const xml = await ec2Query(env, { Action: "DescribeFleets", "FleetId.1": fleetId });
     return {
@@ -69,6 +69,11 @@ function fleetStateMessage(info: FleetInfo, requestedCapacity: number): string |
   const { state, activityStatus } = info;
   if (state === "modifying") {
     return "A fleet modification is already in progress — try again in a moment.";
+  }
+  if (state === "request-canceled-and-instance-running") {
+    return requestedCapacity > 0
+      ? "Server is stopping — instances are still running but will terminate shortly. Wait before restarting."
+      : "Fleet request is already cancelled; instances are terminating.";
   }
   if (state === "delete-requested" || state === "deleted") {
     return "The fleet has been deleted and cannot accept modifications.";
