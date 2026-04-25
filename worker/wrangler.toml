@@ -7,7 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "sploosh"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"  # wrangler d1 create sploosh
+database_id = "6580ea7a-a3c2-4193-aa08-34aa9dcab4ef"
 
 # Scheduled reconciler + allowlist sweeper
 [triggers]
