@@ -6,6 +6,7 @@
 
 const APP_ID = process.env.DISCORD_APP_ID ?? (() => { throw new Error("DISCORD_APP_ID required"); })();
 const TOKEN = process.env.DISCORD_BOT_TOKEN ?? (() => { throw new Error("DISCORD_BOT_TOKEN required"); })();
+const GUILD_ID = process.env.DISCORD_GUILD_ID;
 
 const MODPACK_OPTION = {
   name: "modpack",
@@ -55,8 +56,14 @@ const commands = [
   },
 ];
 
+const endpoint = GUILD_ID
+  ? `https://discord.com/api/v10/applications/${APP_ID}/guilds/${GUILD_ID}/commands`
+  : `https://discord.com/api/v10/applications/${APP_ID}/commands`;
+
+console.log(GUILD_ID ? `Registering guild commands for guild ${GUILD_ID}` : "Registering global commands");
+
 const res = await fetch(
-  `https://discord.com/api/v10/applications/${APP_ID}/commands`,
+  endpoint,
   {
     method: "PUT",
     headers: {
