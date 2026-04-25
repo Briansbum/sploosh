@@ -21,6 +21,10 @@ jobs:
       - run: npm ci
         working-directory: worker
 
+      - name: Type check
+        run: npx tsc --noEmit
+        working-directory: worker
+
       - name: Deploy
         run: npx wrangler deploy
         working-directory: worker

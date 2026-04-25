@@ -2,7 +2,7 @@ import { listModpacks } from "../db";
 import { getServerState } from "../db";
 import type { Env } from "../types";
 
-export async function handleModpacks(env: Env): Response {
+export async function handleModpacks(env: Env): Promise<Response> {
   const packs = await listModpacks(env);
   if (packs.length === 0) {
     return Response.json({ type: 4, data: { content: "No modpacks configured yet." } });
@@ -12,7 +12,7 @@ export async function handleModpacks(env: Env): Response {
     packs.map(async (p) => {
       const state = await getServerState(env, p.name);
       const status = state?.status ?? "unknown";
-      const emoji = { stopped: "⚫", starting: "🟡", running: "🟢", stopping: "🟠" }[status] ?? "❓";
+      const emoji = ({ stopped: "⚫", starting: "🟡", running: "🟢", stopping: "🟠" } as Record<string, string>)[status] ?? "❓";
       const links: string[] = [];
       if (p.mrpack_url) links.push(`[Download pack](${p.mrpack_url})`);
       if (p.pack_toml_url) links.push(`[pack.toml](${p.pack_toml_url})`);

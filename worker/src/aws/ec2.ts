@@ -11,7 +11,7 @@ function ec2Creds(env: Env) {
   };
 }
 
-async function ec2Query(env: Env, params: Record<string, string>): Promise<Document> {
+async function ec2Query(env: Env, params: Record<string, string>): Promise<string> {
   const region = env.AWS_REGION;
   const url = `https://ec2.${region}.amazonaws.com/`;
   const body = new URLSearchParams({ Version: "2016-11-15", ...params }).toString();
@@ -26,7 +26,12 @@ async function ec2Query(env: Env, params: Record<string, string>): Promise<Docum
   const res = await fetch(req);
   const text = await res.text();
   if (!res.ok) throw new Error(`EC2 error ${res.status}: ${text}`);
-  return new DOMParser().parseFromString(text, "text/xml");
+  return text;
+}
+
+function xmlTag(xml: string, tag: string): string | null {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`));
+  return m ? m[1].trim() : null;
 }
 
 /** Set EC2 Fleet target capacity (0=stop, 1=start) */
@@ -44,19 +49,19 @@ export async function getFleetInstance(
   env: Env,
   fleetId: string,
 ): Promise<{ instanceId: string; publicIp: string } | null> {
-  const doc = await ec2Query(env, {
+  const xml = await ec2Query(env, {
     Action: "DescribeFleetInstances",
     FleetId: fleetId,
   });
-  const instanceId = doc.querySelector("instanceId")?.textContent?.trim() ?? null;
+  const instanceId = xmlTag(xml, "instanceId");
   if (!instanceId) return null;
 
   // Get public IP from DescribeInstances
-  const doc2 = await ec2Query(env, {
+  const xml2 = await ec2Query(env, {
     Action: "DescribeInstances",
     "InstanceId.1": instanceId,
   });
-  const publicIp = doc2.querySelector("ipAddress")?.textContent?.trim() ?? "";
+  const publicIp = xmlTag(xml2, "ipAddress") ?? "";
   return { instanceId, publicIp };
 }
 
@@ -66,7 +71,7 @@ export async function authorizeSgIngress(
   sgId: string,
   ip: string,
 ): Promise<string> {
-  const doc = await ec2Query(env, {
+  const xml = await ec2Query(env, {
     Action: "AuthorizeSecurityGroupIngress",
     GroupId: sgId,
     "IpPermissions.1.IpProtocol": "tcp",
@@ -75,11 +80,7 @@ export async function authorizeSgIngress(
     "IpPermissions.1.IpRanges.1.CidrIp": `${ip}/32`,
     "IpPermissions.1.IpRanges.1.Description": "sploosh-allowlist",
   });
-  // The response includes the rule ID we need to revoke later
-  const ruleId =
-    doc.querySelector("securityGroupRuleId")?.textContent?.trim() ??
-    `${sgId}:${ip}`; // fallback key if API doesn't return it
-  return ruleId;
+  return xmlTag(xml, "securityGroupRuleId") ?? `${sgId}:${ip}`;
 }
 
 /** Revoke a security group rule by rule ID */
