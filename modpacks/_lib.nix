@@ -114,7 +114,7 @@ let
           symlinks = {
             "mods" = "${modpack}/mods";
           };
-          files = {
+          files = lib.optionalAttrs (builtins.pathExists (./. + "/${name}/config")) {
             "config" = "${modpack}/config";
           };
         };
