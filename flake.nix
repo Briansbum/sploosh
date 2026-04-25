@@ -39,6 +39,7 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ nix-minecraft.overlays.default ];
+          config.allowUnfree = true;
         };
 
         mkModpack = import ./modpacks/_lib.nix { inherit pkgs lib nix-minecraft; };
@@ -91,6 +92,7 @@
           pkgs = import nixpkgs {
             system = "x86_64-linux";
             overlays = [ nix-minecraft.overlays.default ];
+            config.allowUnfree = true;
           };
           mkModpack = import ./modpacks/_lib.nix { inherit pkgs lib nix-minecraft; };
           mp = mkModpack ({ inherit name; } // def);
@@ -112,6 +114,7 @@
           pkgs = import nixpkgs {
             system = "x86_64-linux";
             overlays = [ nix-minecraft.overlays.default ];
+            config.allowUnfree = true;
           };
           mkModpack = import ./modpacks/_lib.nix { inherit pkgs lib nix-minecraft; };
         in
