@@ -40,7 +40,6 @@ export async function setFleetCapacity(env: Env, fleetId: string, capacity: numb
     Action: "ModifyFleet",
     FleetId: fleetId,
     "TargetCapacitySpecification.TotalTargetCapacity": String(capacity),
-    "TargetCapacitySpecification.DefaultTargetCapacityType": "spot",
   });
 }
 
