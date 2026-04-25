@@ -6,9 +6,7 @@
     displayName = "Create Central";
     mcVersion = "1.21.1";
     loader = "neoforge";
-    # sha256 hash of the entire fetched modpack tree — set to lib.fakeHash until resolved:
-    #   nix build .#modpacks.create-central.mrpack
-    # modpackHash = "sha256-...";
+    modpackHash = "sha256-sNVL+exfab8j9WQLR1X2vzN6NkmUqffRMfdt9YGZ+8A=";
     jvmOpts = "-Xms2048M -Xmx8192M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200";
   };
 
