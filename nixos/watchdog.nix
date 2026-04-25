@@ -17,7 +17,6 @@ let
       IDLE_THRESHOLD=$(( IDLE_MINUTES * 60 / POLL_SECONDS ))
 
       STATE_FILE=/run/minecraft/idle-count
-      WORKER_WEBHOOK=''${WORKER_IDLE_WEBHOOK:-""}
 
       mkdir -p /run/minecraft
       echo 0 > "$STATE_FILE"
