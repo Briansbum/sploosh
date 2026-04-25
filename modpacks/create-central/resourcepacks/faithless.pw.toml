@@ -1,13 +1,13 @@
 name = "Faithless"
-filename = "Faithless 1.21.zip"
+filename = "Faithless.zip"
 side = "client"
 
 [download]
-url = "https://cdn.modrinth.com/data/CwaddKq6/versions/mQV8QmTD/Faithless%201.21.zip"
+url = "https://cdn.modrinth.com/data/CwaddKq6/versions/qziCDcnv/Faithless.zip"
 hash-format = "sha512"
-hash = "81ed10cb8acb7ffbf310eba90346a6a823592d57a02352640f272c1aad40638de30f2cc1da37888271c8ab427beaed0f2ea06f3b40971699f74cd4a7c43d5efd"
+hash = "6e41f4c5e17c64660d0d3d11609f45d486271c7401a74460bc58e3bf7a4c4970092974e5b8b7bff9ed11ef4bac31b08f4e4e19d8805c1aa61445539f29501e3c"
 
 [update]
 [update.modrinth]
 mod-id = "CwaddKq6"
-version = "mQV8QmTD"
+version = "qziCDcnv"

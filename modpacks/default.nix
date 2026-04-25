@@ -4,7 +4,7 @@
 {
   create-central = {
     displayName = "Create Central";
-    mcVersion = "1.20.1";
+    mcVersion = "1.21.1";
     loader = "neoforge";
     # sha256 hash of the entire fetched modpack tree — set to lib.fakeHash until resolved:
     #   nix build .#modpacks.create-central.mrpack
