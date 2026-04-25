@@ -253,7 +253,7 @@ resource "aws_ec2_fleet" "mc" {
   }
 
   on_demand_options {
-    allocation_strategy = "lowest-price"
+    allocation_strategy = "lowestPrice"
   }
 
   # Allow the fleet to exist with 0 capacity
