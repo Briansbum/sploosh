@@ -1,0 +1,75 @@
+name: Build and register AMIs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "nixos/**"
+      - "modpacks/**"
+      - "flake.nix"
+      - "flake.lock"
+  workflow_dispatch:
+    inputs:
+      modpack:
+        description: "Specific modpack to build (blank = all)"
+        required: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      modpacks: ${{ steps.list.outputs.modpacks }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          if [ -n "${{ inputs.modpack }}" ]; then
+            echo 'modpacks=["${{ inputs.modpack }}"]' >> "$GITHUB_OUTPUT"
+          else
+            packs=$(ls modpacks/ | grep -v '^_' | grep -v 'default.nix' | jq -Rnc '[inputs]' <<< "$(ls modpacks/ | grep -v '^_' | grep -v 'default.nix')")
+            echo "modpacks=$packs" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-ami:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        modpack: ${{ fromJson(needs.discover.outputs.modpacks) }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: sploosh
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: eu-west-2
+
+      - name: Build NixOS AMI
+        run: |
+          nix build .#amis.${{ matrix.modpack }} -o result-ami
+          echo "NIX_RESULT=$(readlink -f result-ami)" >> "$GITHUB_ENV"
+
+      - name: Register AMI
+        env:
+          S3_BUCKET: bread-minecraft-backups
+          CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
+          CF_WORKER_SECRET: ${{ secrets.CF_WORKER_SECRET }}
+        run: |
+          chmod +x scripts/register-ami.sh
+          ./scripts/register-ami.sh ${{ matrix.modpack }} "$NIX_RESULT"

@@ -1,0 +1,14 @@
+name = "Create Central"
+author = "sploosh"
+version = "1.0.0"
+description = "Create and its best addons on NeoForge 1.20.1"
+pack-format = "packwiz:1.1.0"
+
+[index]
+file = "index.toml"
+hash-format = "sha256"
+hash = "6dd67ab296747f6e68da4731594e8720aca200869cca79614b115d5bda976277"
+
+[versions]
+minecraft = "1.20.1"
+neoforge = "47.3.0"

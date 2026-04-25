@@ -1,0 +1,24 @@
+result
+result-*
+.direnv/
+
+# Nix store symlinks
+/modpacks/*/mods/*.jar
+
+# Packwiz cache
+.packwiz-cache/
+
+# Terraform / OpenTofu state
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/*.tfvars
+infra/.terraform.lock.hcl
+
+# Worker node_modules
+worker/node_modules/
+worker/.wrangler/
+
+# Secrets
+*.env
+.env.*

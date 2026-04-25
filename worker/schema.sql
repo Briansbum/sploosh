@@ -1,0 +1,37 @@
+-- D1 schema for sploosh Cloudflare Worker
+-- Apply with: wrangler d1 execute sploosh --file schema.sql
+
+CREATE TABLE IF NOT EXISTS modpacks (
+  name             TEXT PRIMARY KEY,
+  display_name     TEXT NOT NULL,
+  ami_id           TEXT NOT NULL DEFAULT '',
+  fleet_id         TEXT NOT NULL DEFAULT '',
+  security_group_id TEXT NOT NULL DEFAULT '',
+  s3_prefix        TEXT NOT NULL,
+  mrpack_url       TEXT NOT NULL DEFAULT '',
+  pack_toml_url    TEXT NOT NULL DEFAULT ''
+);
+
+CREATE TABLE IF NOT EXISTS server_state (
+  modpack     TEXT PRIMARY KEY REFERENCES modpacks(name),
+  status      TEXT NOT NULL DEFAULT 'stopped', -- stopped|starting|running|stopping
+  instance_id TEXT,
+  public_ip   TEXT,
+  last_seen   INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS allowlist (
+  modpack         TEXT NOT NULL,
+  discord_user_id TEXT NOT NULL,
+  ip              TEXT NOT NULL,
+  sg_rule_id      TEXT NOT NULL DEFAULT '',
+  added_at        INTEGER NOT NULL,
+  expires_at      INTEGER NOT NULL,
+  PRIMARY KEY (modpack, discord_user_id)
+);
+
+-- Seed modpacks (update ami_id/fleet_id/sg_id after tofu apply)
+INSERT OR IGNORE INTO modpacks (name, display_name, s3_prefix, mrpack_url, pack_toml_url)
+VALUES ('all-the-forge-10', 'All The Forge 10', 'all-the-forge-10/restic', '', '');
+
+INSERT OR IGNORE INTO server_state (modpack, status) VALUES ('all-the-forge-10', 'stopped');
