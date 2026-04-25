@@ -1,3 +1,8 @@
+output "ci_role_arn" {
+  description = "IAM role ARN for GitHub Actions OIDC -- set as AWS_ROLE_ARN repo secret"
+  value       = aws_iam_role.ci.arn
+}
+
 output "worker_access_key_id" {
   description = "AWS access key ID for the Cloudflare Worker — add to wrangler secrets"
   value       = aws_iam_access_key.cf_worker.id

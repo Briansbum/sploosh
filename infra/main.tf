@@ -47,6 +47,62 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
   }
 }
 
+# ── IAM — GitHub Actions OIDC ─────────────────────────────────────────────────
+# If this provider already exists in your account, import it:
+#   tofu import aws_iam_openid_connect_provider.github arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com
+
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  # AWS validates against trusted CAs; thumbprint is a required placeholder
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+}
+
+resource "aws_iam_role" "ci" {
+  name = "sploosh-github-ci"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+        }
+        StringLike = {
+          "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:*"
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "ci" {
+  name = "sploosh-ci-policy"
+  role = aws_iam_role.ci.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:ImportSnapshot",
+          "ec2:DescribeImportSnapshotTasks",
+          "ec2:RegisterImage",
+          "ec2:DescribeImages",
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
+        Resource = "${aws_s3_bucket.backups.arn}/ami-staging/*"
+      }
+    ]
+  })
+}
+
 # ── IAM — instance profile ─────────────────────────────────────────────────────
 
 resource "aws_iam_role" "mc_instance" {

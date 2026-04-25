@@ -1,3 +1,9 @@
+variable "github_repo" {
+  description = "GitHub repo in owner/name format, used for OIDC trust policy"
+  type        = string
+  default     = "Briansbum/sploosh"
+}
+
 variable "aws_region" {
   description = "AWS region"
   type        = string
