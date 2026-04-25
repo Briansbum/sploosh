@@ -9,6 +9,7 @@ let
     runtimeInputs = with pkgs; [ mcrcon curl jq coreutils ];
     text = ''
       set -euo pipefail
+      # shellcheck source=/dev/null
       source /run/minecraft/env
 
       IDLE_MINUTES=''${IDLE_MINUTES:-15}

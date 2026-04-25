@@ -72,6 +72,7 @@ let
     runtimeInputs = with pkgs; [ curl jq mcrcon ];
     text = ''
       set -euo pipefail
+      # shellcheck source=/dev/null
       source /run/minecraft/env 2>/dev/null || true
 
       IMDS_TOKEN=$(curl -sf -X PUT \
