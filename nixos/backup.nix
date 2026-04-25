@@ -11,6 +11,7 @@ let
     text = ''
       set -euo pipefail
 
+      # shellcheck source=/dev/null
       source /run/minecraft/env
 
       SVCDIR="/var/lib/minecraft/$SPLOOSH_MODPACK"
@@ -46,6 +47,7 @@ let
     runtimeInputs = with pkgs; [ restic mcrcon ];
     text = ''
       set -euo pipefail
+      # shellcheck source=/dev/null
       source /run/minecraft/env
 
       SVCDIR="/var/lib/minecraft/$SPLOOSH_MODPACK"
