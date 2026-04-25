@@ -1,7 +1,7 @@
 name = "Create Central"
 author = "sploosh"
 version = "1.0.0"
-description = "Create and its best addons on NeoForge 1.20.1"
+description = "Create and its best addons on NeoForge"
 pack-format = "packwiz:1.1.0"
 
 [index]
@@ -11,7 +11,7 @@ hash = "9e0950123c3097206cf7e10af398d724e9e0ca9ce447672dc575bfacf365ed90"
 
 [versions]
 minecraft = "1.21.1"
-neoforge = "21.1.172"
+neoforge = "21.1.219"
 
 [options]
 acceptable-game-versions = ["1.21", "1.21.1"]
