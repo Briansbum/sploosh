@@ -68,6 +68,21 @@
               echo "Installing worker npm deps..."
               (cd worker && npm install --silent)
             fi
+
+            # D1 helpers — run SQL against the remote sploosh database
+            # Usage: d1q "SELECT * FROM modpacks"
+            d1q() { wrangler d1 execute sploosh --remote --config worker/wrangler.toml --command "$*"; }
+            # Usage: d1f worker/schema.sql
+            d1f() { wrangler d1 execute sploosh --remote --config worker/wrangler.toml --file "$1"; }
+
+            # Worker helpers
+            alias wtail='(cd worker && wrangler tail)'
+            alias wdev='(cd worker && wrangler dev)'
+            alias register-commands='(cd worker && npx tsx ../scripts/register-commands.ts)'
+
+            # Infra shortcut (always needs var file)
+            alias tofu-plan='tofu -chdir=infra plan -var-file=prod.tfvars'
+            alias tofu-apply='tofu -chdir=infra apply -var-file=prod.tfvars'
           '';
         };
 
