@@ -224,16 +224,29 @@ resource "aws_iam_user_policy" "cf_worker" {
       {
         Effect = "Allow"
         Action = [
+          # Fleet lifecycle
           "ec2:CreateFleet",
           "ec2:DeleteFleets",
           "ec2:DescribeFleets",
           "ec2:DescribeFleetInstances",
+          # CreateFleet internally calls RunInstances; CreateTags is needed for
+          # tag_specifications in the launch template
+          "ec2:RunInstances",
+          "ec2:CreateTags",
+          # Instance inspection
           "ec2:DescribeInstances",
+          # Security group management (allowlist)
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:RevokeSecurityGroupIngress",
           "ec2:DescribeSecurityGroups",
         ]
         Resource = "*"
+      },
+      {
+        # Required so CreateFleet can attach the instance profile to launched instances
+        Effect   = "Allow"
+        Action   = ["iam:PassRole"]
+        Resource = aws_iam_role.mc_instance.arn
       }
     ]
   })
