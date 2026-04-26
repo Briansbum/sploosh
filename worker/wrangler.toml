@@ -25,6 +25,7 @@ crons = ["*/5 * * * *"]
 
 [assets]
 directory = "./public"
+run_worker_first = false
 
 [vars]
 AWS_REGION = "eu-west-2"
