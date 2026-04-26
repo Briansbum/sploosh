@@ -41,6 +41,11 @@ hash = "f67aa60c765593a8c70f78296a460349c6aef5f4a16d173eae02e8803b545ad4"
 metafile = true
 
 [[files]]
+file = "mods/packwiz-installer-bootstrap.pw.toml"
+hash = "7285038319f871b01122ddbd174072c4fd1a0f95a52f133dc32c168add4f16f6"
+metafile = true
+
+[[files]]
 file = "mods/rpl.pw.toml"
 hash = "7815e5a589de0c02a62ae83590e1f75f4d0c269e48f2435ce2ac448976ddf49f"
 metafile = true
