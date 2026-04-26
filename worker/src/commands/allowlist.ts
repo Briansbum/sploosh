@@ -7,7 +7,6 @@ export async function handleAllowlist(
   env: Env,
   ctx: ExecutionContext,
   userId: string,
-  req: Request,
 ): Promise<Response> {
   const options = (interaction.data as Record<string, unknown>)?.options as
     | Array<{ name: string; value: unknown }>
@@ -25,22 +24,14 @@ export async function handleAllowlist(
     return Response.json({ type: 4, data: { content: `Unknown modpack: \`${modpackName}\``, flags: 64 } });
   }
 
-  // If no IP provided, use CF-Connecting-IP
   if (!ip) {
-    const cfIp = req.headers.get("CF-Connecting-IP");
-    if (!cfIp) {
-      return Response.json({
-        type: 4,
-        data: {
-          content:
-            "Could not auto-detect your IP.\nRun `/allowlist modpack:" +
-            modpackName +
-            " ip:<your-ip>` — visit https://sploosh.workers.dev/whatismyip to find your IP.",
-          flags: 64,
-        },
-      });
-    }
-    ip = cfIp;
+    return Response.json({
+      type: 4,
+      data: {
+        content: `IP is required. Find yours at https://sploosh.workers.dev/whatismyip then run:\n\`/allowlist modpack:${modpackName} ip:<your-ip>\``,
+        flags: 64,
+      },
+    });
   }
 
   if (!isValidIp(ip)) {

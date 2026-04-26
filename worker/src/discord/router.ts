@@ -60,7 +60,7 @@ export async function handleInteraction(
       case "stop":
         return handleStop(interaction, env, userId);
       case "allowlist":
-        return handleAllowlist(interaction, env, ctx, userId, req);
+        return handleAllowlist(interaction, env, ctx, userId);
       case "revoke":
         return handleRevoke(interaction, env, userId);
       case "help":

@@ -15,7 +15,7 @@ const HELP_TEXT = `\
 \`/status [modpack]\` — show whether the server is running and the IP (if you're allowlisted)
 \`/start modpack:<name>\` — start the server *(admins only)*
 \`/stop modpack:<name>\` — save & stop the server *(admins only)*
-\`/allowlist modpack:<name> [ip:<your-ip>]\` — open port 25565 for your IP (7-day TTL); auto-detects your IP if omitted
+\`/allowlist modpack:<name> ip:<your-ip>\` — open port 25565 for your IP (7-day TTL); find your IP at <https://sploosh.workers.dev/whatismyip>
 \`/revoke modpack:<name>\` — remove your IP from the allowlist
 
 **Idle shutdown**
