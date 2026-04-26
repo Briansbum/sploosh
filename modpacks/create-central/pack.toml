@@ -15,3 +15,7 @@ neoforge = "21.1.219"
 
 [options]
 acceptable-game-versions = ["1.21", "1.21.1"]
+
+[update]
+[update.packwiz]
+pack-file = "https://briansbum.github.io/sploosh/packdir-create-central/pack.toml"
