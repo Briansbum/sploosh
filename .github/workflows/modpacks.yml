@@ -99,7 +99,7 @@ jobs:
         run: |
           mkdir -p worker/public/packs
           for pack in packdirs/*/; do
-            name=$(basename "$pack")
+            name=$(basename "$pack" | sed 's/^packdir-//')
             mkdir -p "worker/public/packs/$name"
             cp -r "$pack". "worker/public/packs/$name/"
           done
