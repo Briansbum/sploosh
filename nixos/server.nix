@@ -116,10 +116,12 @@ in
           echo "$MERGED" > "$WHITELIST"
         fi
         # Retry until RCON is up (server takes ~10s to be ready)
-        for i in $(seq 1 12); do
+        attempts=12
+        while [ "$attempts" -gt 0 ]; do
           if mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist reload" 2>/dev/null; then
             break
           fi
+          attempts=$(( attempts - 1 ))
           sleep 5
         done
       '';
