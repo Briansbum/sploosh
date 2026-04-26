@@ -1,14 +1,14 @@
-const PACK_URL = "https://briansbum.github.io/sploosh";
+const PAGES_URL = "https://briansbum.github.io/sploosh";
 
 const HELP_TEXT = `\
 **Sploosh — Minecraft server help**
 
 **Installing the modpack (Prism Launcher)**
 1. Download & install Prism Launcher: <https://prismlauncher.org>
-2. In Prism, click **Add Instance → Import** and paste the pack URL:
-   \`${PACK_URL}\`
-   (or browse to the modpack page and click **Install**)
-3. Launch the instance — mods download automatically on first run.
+2. Go to the modpack page: <${PAGES_URL}>
+3. Find the pack you want, copy its **Install link**
+4. In Prism, click **Add Instance → From URL** and paste the link
+5. Launch the instance — mods download automatically on first run.
 
 **Commands**
 \`/modpacks\` — list available packs and their pack URLs
