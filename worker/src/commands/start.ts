@@ -1,5 +1,5 @@
 import { getModpack, getServerState, setServerStatus } from "../db";
-import { setFleetCapacity, getFleetInstance } from "../aws/ec2";
+import { createFleet, deleteFleet, getFleetInstance } from "../aws/ec2";
 import { checkRateLimit } from "../ratelimit";
 import type { Env } from "../types";
 
@@ -53,21 +53,23 @@ export async function handleStart(
 
   // Defer immediately — EC2 fleet start can take 2-4 min
   const token = (interaction as Record<string, string>).token;
-  ctx.waitUntil(doStart(env, modpack.fleet_id, modpackName, modpack.display_name, token));
+  ctx.waitUntil(doStart(env, modpack.launch_template_id, modpackName, modpack.display_name, token));
 
   return Response.json({ type: DEFERRED_CHANNEL_MESSAGE });
 }
 
 async function doStart(
   env: Env,
-  fleetId: string,
+  launchTemplateId: string,
   modpackName: string,
   displayName: string,
   token: string,
 ): Promise<void> {
+  let fleetId: string | undefined;
   try {
-    await setFleetCapacity(env, fleetId, 1);
-    await setServerStatus(env, modpackName, "starting");
+    const fleet = await createFleet(env, launchTemplateId);
+    fleetId = fleet.fleetId;
+    await setServerStatus(env, modpackName, "starting", null, null, fleetId);
 
     // Poll for the instance to come up (max 10 minutes)
     let instance: { instanceId: string; publicIp: string } | null = null;
@@ -78,12 +80,13 @@ async function doStart(
     }
 
     if (!instance?.publicIp) {
-      await setServerStatus(env, modpackName, "stopped");
+      try { await deleteFleet(env, fleetId); } catch {}
+      await setServerStatus(env, modpackName, "stopped", null, null, null);
       await patchReply(env, token, `❌ **${displayName}** failed to start (timeout waiting for instance).`);
       return;
     }
 
-    await setServerStatus(env, modpackName, "running", instance.instanceId, instance.publicIp);
+    await setServerStatus(env, modpackName, "running", instance.instanceId, instance.publicIp, fleetId);
 
     await patchReply(
       env,
@@ -91,6 +94,10 @@ async function doStart(
       `🟢 **${displayName}** is starting up!\nConnect: \`${instance.publicIp}:25565\`\n(May take 3-5 min for the world to load)`,
     );
   } catch (e) {
+    if (fleetId) {
+      try { await deleteFleet(env, fleetId); } catch {}
+      await setServerStatus(env, modpackName, "stopped", null, null, null);
+    }
     await patchReply(env, token, `❌ Failed to start **${displayName}**: ${String(e)}`);
   }
 }

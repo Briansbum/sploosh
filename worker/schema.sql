@@ -2,14 +2,14 @@
 -- Apply with: wrangler d1 execute sploosh --file schema.sql
 
 CREATE TABLE IF NOT EXISTS modpacks (
-  name             TEXT PRIMARY KEY,
-  display_name     TEXT NOT NULL,
-  ami_id           TEXT NOT NULL DEFAULT '',
-  fleet_id         TEXT NOT NULL DEFAULT '',
+  name              TEXT PRIMARY KEY,
+  display_name      TEXT NOT NULL,
+  ami_id            TEXT NOT NULL DEFAULT '',
+  launch_template_id TEXT NOT NULL DEFAULT '',
   security_group_id TEXT NOT NULL DEFAULT '',
-  s3_prefix        TEXT NOT NULL,
-  mrpack_url       TEXT NOT NULL DEFAULT '',
-  pack_toml_url    TEXT NOT NULL DEFAULT ''
+  s3_prefix         TEXT NOT NULL,
+  mrpack_url        TEXT NOT NULL DEFAULT '',
+  pack_toml_url     TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS server_state (
@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS server_state (
   status      TEXT NOT NULL DEFAULT 'stopped', -- stopped|starting|running|stopping
   instance_id TEXT,
   public_ip   TEXT,
+  fleet_id    TEXT, -- ephemeral; set on /start, cleared on /stop
   last_seen   INTEGER
 );
 

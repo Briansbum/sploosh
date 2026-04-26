@@ -65,49 +65,47 @@ export async function describeFleet(env: Env, fleetId: string): Promise<FleetInf
   }
 }
 
-function fleetStateMessage(info: FleetInfo, requestedCapacity: number): string | null {
-  const { state, activityStatus } = info;
-  if (state === "modifying") {
-    return "A fleet modification is already in progress — try again in a moment.";
+const INSTANCE_TYPES = [
+  "r5.xlarge", "r5a.xlarge", "r5n.xlarge", "r6i.xlarge",
+  "m5.2xlarge", "m5a.2xlarge", "m6i.2xlarge", "m6a.2xlarge",
+];
+const AVAILABILITY_ZONES = ["eu-west-2a", "eu-west-2b", "eu-west-2c"];
+
+export async function createFleet(env: Env, launchTemplateId: string): Promise<{ fleetId: string }> {
+  const params: Record<string, string> = {
+    Action: "CreateFleet",
+    Type: "maintain",
+    "TargetCapacitySpecification.TotalTargetCapacity": "1",
+    "TargetCapacitySpecification.DefaultTargetCapacityType": "spot",
+    "SpotOptions.AllocationStrategy": "price-capacity-optimized",
+    "SpotOptions.InstanceInterruptionBehavior": "terminate",
+    "OnDemandOptions.AllocationStrategy": "lowestPrice",
+    ExcessCapacityTerminationPolicy: "termination",
+    "LaunchTemplateConfigs.1.LaunchTemplateSpecification.LaunchTemplateId": launchTemplateId,
+    "LaunchTemplateConfigs.1.LaunchTemplateSpecification.Version": "$Default",
+  };
+
+  let i = 1;
+  for (const instanceType of INSTANCE_TYPES) {
+    for (const az of AVAILABILITY_ZONES) {
+      params[`LaunchTemplateConfigs.1.Overrides.${i}.InstanceType`] = instanceType;
+      params[`LaunchTemplateConfigs.1.Overrides.${i}.AvailabilityZone`] = az;
+      i++;
+    }
   }
-  if (state === "request-canceled-and-instance-running") {
-    return requestedCapacity > 0
-      ? "Server is stopping — instances are still running but will terminate shortly. Wait before restarting."
-      : "Fleet request is already cancelled; instances are terminating.";
-  }
-  if (state === "delete-requested" || state === "deleted") {
-    return "The fleet has been deleted and cannot accept modifications.";
-  }
-  if (state === "failed") {
-    return "The fleet is in a failed state and cannot be modified.";
-  }
-  if (activityStatus === "pending-termination") {
-    return requestedCapacity > 0
-      ? "Spot instances are currently being terminated — wait for shutdown to complete before restarting."
-      : "Spot instances are already being terminated.";
-  }
-  if (activityStatus === "pending-fulfillment" && requestedCapacity > 0) {
-    return "Fleet is already waiting for instances to launch.";
-  }
-  return null;
+
+  const xml = await ec2Query(env, params);
+  const fleetId = xmlTag(xml, "fleetId");
+  if (!fleetId) throw new EC2Error("NoFleetId", "CreateFleet response missing fleetId");
+  return { fleetId };
 }
 
-/** Set EC2 Fleet target capacity (0=stop, 1=start) */
-export async function setFleetCapacity(env: Env, fleetId: string, capacity: number): Promise<void> {
-  try {
-    await ec2Query(env, {
-      Action: "ModifyFleet",
-      FleetId: fleetId,
-      "TargetCapacitySpecification.TotalTargetCapacity": String(capacity),
-    });
-  } catch (e) {
-    const info = await describeFleet(env, fleetId);
-    if (info) {
-      const msg = fleetStateMessage(info, capacity);
-      if (msg) throw new Error(msg);
-    }
-    throw e;
-  }
+export async function deleteFleet(env: Env, fleetId: string): Promise<void> {
+  await ec2Query(env, {
+    Action: "DeleteFleets",
+    "FleetId.1": fleetId,
+    TerminateInstances: "true",
+  });
 }
 
 /** Get the running instance for a fleet (returns null if no instance yet) */

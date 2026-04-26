@@ -1,5 +1,5 @@
 import { getModpack, getServerState, setServerStatus } from "../db";
-import { setFleetCapacity } from "../aws/ec2";
+import { deleteFleet } from "../aws/ec2";
 import { checkRateLimit } from "../ratelimit";
 import type { Env } from "../types";
 
@@ -37,17 +37,20 @@ export async function handleStop(
     return Response.json({ type: 4, data: { content: `**${modpack.display_name}** is already stopped.`, flags: 64 } });
   }
 
-  // Set fleet capacity to 0; the instance will receive a termination notice,
-  // the spot handler and watchdog will take a final backup before the instance goes.
+  if (!state?.fleet_id) {
+    await setServerStatus(env, modpackName, "stopped", null, null, null);
+    return Response.json({ type: 4, data: { content: `**${modpack.display_name}** has no active fleet — marked as stopped.`, flags: 64 } });
+  }
+
   try {
-    await setFleetCapacity(env, modpack.fleet_id, 0);
+    await deleteFleet(env, state.fleet_id);
   } catch (e) {
     return Response.json({
       type: 4,
       data: { content: `❌ Failed to stop **${modpack.display_name}**: ${String(e)}`, flags: 64 },
     });
   }
-  await setServerStatus(env, modpackName, "stopping");
+  await setServerStatus(env, modpackName, "stopping", null, null, null);
 
   return Response.json({
     type: 4,

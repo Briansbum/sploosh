@@ -141,6 +141,9 @@ resource "aws_iam_role_policy" "ci" {
           "ec2:DescribeImportSnapshotTasks",
           "ec2:RegisterImage",
           "ec2:DescribeImages",
+          "ec2:CreateLaunchTemplateVersion",
+          "ec2:ModifyLaunchTemplate",
+          "ec2:DescribeLaunchTemplates",
         ]
         Resource = "*"
       },
@@ -221,10 +224,11 @@ resource "aws_iam_user_policy" "cf_worker" {
       {
         Effect = "Allow"
         Action = [
+          "ec2:CreateFleet",
+          "ec2:DeleteFleets",
           "ec2:DescribeFleets",
           "ec2:DescribeFleetInstances",
           "ec2:DescribeInstances",
-          "ec2:ModifyFleet",
           "ec2:AuthorizeSecurityGroupIngress",
           "ec2:RevokeSecurityGroupIngress",
           "ec2:DescribeSecurityGroups",
@@ -322,61 +326,6 @@ resource "aws_launch_template" "mc" {
       Modpack = each.key
     }
   }
-}
-
-# ── EC2 Fleet (maintain, target=0 when idle) ───────────────────────────────────
-
-resource "aws_ec2_fleet" "mc" {
-  for_each = local.modpacks
-
-  type = "maintain"
-
-  target_capacity_specification {
-    default_target_capacity_type = "spot"
-    total_target_capacity        = 0 # bot sets to 1 to start, 0 to stop
-  }
-
-  launch_template_config {
-    launch_template_specification {
-      launch_template_id = aws_launch_template.mc[each.key].id
-      version            = "$Latest"
-    }
-
-    # Spread across instance types and AZs for best spot availability
-    dynamic "override" {
-      for_each = setproduct(var.instance_types, data.aws_availability_zones.available.names)
-      content {
-        instance_type     = override.value[0]
-        availability_zone = override.value[1]
-      }
-    }
-  }
-
-  spot_options {
-    allocation_strategy            = "price-capacity-optimized"
-    instance_interruption_behavior = "terminate"
-  }
-
-  on_demand_options {
-    allocation_strategy = "lowestPrice"
-  }
-
-  # Allow the fleet to exist with 0 capacity
-  excess_capacity_termination_policy = "termination"
-
-  tags = {
-    Name    = "sploosh-${each.key}"
-    Modpack = each.key
-  }
-
-  # Prevent Terraform from destroying the fleet when updating AMI — just update
-  lifecycle {
-    ignore_changes = [launch_template_config]
-  }
-}
-
-data "aws_availability_zones" "available" {
-  state = "available"
 }
 
 # ── AMI import pipeline ────────────────────────────────────────────────────────

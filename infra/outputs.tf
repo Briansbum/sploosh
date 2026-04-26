@@ -19,9 +19,9 @@ output "security_group_id" {
   value       = aws_security_group.minecraft.id
 }
 
-output "fleet_ids" {
-  description = "EC2 Fleet IDs keyed by modpack name — insert into D1 modpacks table"
-  value       = { for k, v in aws_ec2_fleet.mc : k => v.id }
+output "launch_template_ids" {
+  description = "EC2 Launch Template IDs keyed by modpack name — insert into D1 modpacks table"
+  value       = { for k, v in aws_launch_template.mc : k => v.id }
 }
 
 output "s3_bucket" {

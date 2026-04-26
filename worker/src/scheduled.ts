@@ -13,12 +13,19 @@ async function reconcileServers(env: Env): Promise<void> {
   const modpacks = await listModpacks(env);
 
   for (const mp of modpacks) {
-    if (!mp.fleet_id) continue;
+    const state = await getServerState(env, mp.name);
 
-    const [state, instance, fleetInfo] = await Promise.all([
-      getServerState(env, mp.name),
-      getFleetInstance(env, mp.fleet_id),
-      describeFleet(env, mp.fleet_id),
+    if (!state?.fleet_id) {
+      // No active fleet — snap any stale non-stopped status back to stopped
+      if (state?.status && state.status !== "stopped") {
+        await setServerStatus(env, mp.name, "stopped", null, null, null);
+      }
+      continue;
+    }
+
+    const [instance, fleetInfo] = await Promise.all([
+      getFleetInstance(env, state.fleet_id),
+      describeFleet(env, state.fleet_id),
     ]);
 
     const fleetWindingDown =
@@ -30,7 +37,7 @@ async function reconcileServers(env: Env): Promise<void> {
     if (instance?.publicIp && !fleetWindingDown) {
       // Fleet has a running instance and is healthy
       if (state?.status !== "running" || state.instance_id !== instance.instanceId) {
-        await setServerStatus(env, mp.name, "running", instance.instanceId, instance.publicIp);
+        await setServerStatus(env, mp.name, "running", instance.instanceId, instance.publicIp, state.fleet_id);
 
         // Ensure all allowlisted IPs have SG rules (handles the case where
         // the server was (re)started but some rules weren't added yet)
@@ -53,7 +60,7 @@ async function reconcileServers(env: Env): Promise<void> {
     } else if (instance?.publicIp && fleetWindingDown) {
       // Instance still up but fleet is cancelling — mark stopping so status is accurate
       if (state?.status !== "stopping") {
-        await setServerStatus(env, mp.name, "stopping");
+        await setServerStatus(env, mp.name, "stopping", state.instance_id, state.public_ip, state.fleet_id);
       }
     } else {
       // No running instance
@@ -61,10 +68,10 @@ async function reconcileServers(env: Env): Promise<void> {
         // Only flip to stopped if we've been waiting a long time (not just starting)
         const staleMs = 15 * 60 * 1000; // 15 min
         if (state.last_seen && Date.now() - state.last_seen > staleMs) {
-          await setServerStatus(env, mp.name, "stopped", null, null);
+          await setServerStatus(env, mp.name, "stopped", null, null, null);
         }
       } else if (state?.status === "stopping") {
-        await setServerStatus(env, mp.name, "stopped", null, null);
+        await setServerStatus(env, mp.name, "stopped", null, null, null);
       }
     }
   }

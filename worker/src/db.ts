@@ -21,13 +21,14 @@ export async function setServerStatus(
   status: ServerState["status"],
   instanceId?: string | null,
   publicIp?: string | null,
+  fleetId?: string | null,
 ): Promise<void> {
   await env.DB.prepare(
     `UPDATE server_state
-     SET status=?, instance_id=?, public_ip=?, last_seen=?
+     SET status=?, instance_id=?, public_ip=?, fleet_id=?, last_seen=?
      WHERE modpack=?`,
   )
-    .bind(status, instanceId ?? null, publicIp ?? null, Date.now(), modpack)
+    .bind(status, instanceId ?? null, publicIp ?? null, fleetId ?? null, Date.now(), modpack)
     .run();
 }
 

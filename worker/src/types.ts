@@ -23,7 +23,7 @@ export interface Modpack {
   name: string;
   display_name: string;
   ami_id: string;
-  fleet_id: string;
+  launch_template_id: string;
   security_group_id: string;
   s3_prefix: string;
   mrpack_url: string;
@@ -35,6 +35,7 @@ export interface ServerState {
   status: "stopped" | "starting" | "running" | "stopping";
   instance_id: string | null;
   public_ip: string | null;
+  fleet_id: string | null;
   last_seen: number | null;
 }
 
