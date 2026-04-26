@@ -5,6 +5,7 @@ import { handleStart } from "../commands/start";
 import { handleStop } from "../commands/stop";
 import { handleAllowlist } from "../commands/allowlist";
 import { handleRevoke } from "../commands/revoke";
+import { handleHelp } from "../commands/help";
 import { listModpacks } from "../db";
 import type { Env } from "../types";
 
@@ -62,6 +63,8 @@ export async function handleInteraction(
         return handleAllowlist(interaction, env, ctx, userId, req);
       case "revoke":
         return handleRevoke(interaction, env, userId);
+      case "help":
+        return handleHelp();
       default:
         return json({ type: 4, data: { content: "Unknown command." } });
     }

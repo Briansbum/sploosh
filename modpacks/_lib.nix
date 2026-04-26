@@ -78,6 +78,19 @@ let
     '';
   };
 
+  # ── Users (whitelist + ops) ───────────────────────────────────────────────────
+  # Single source of truth: /users.json at the repo root.
+  # op:0  → whitelist only; op:1-4 → also added to ops.json at that level.
+
+  users = builtins.fromJSON (builtins.readFile ../users.json);
+
+  whitelistJson = pkgs.writeText "whitelist.json" (builtins.toJSON
+    (map (u: { inherit (u) uuid name; }) users));
+
+  opsJson = pkgs.writeText "ops.json" (builtins.toJSON
+    (map (u: { inherit (u) uuid name; level = u.op; bypassesPlayerLimit = false; })
+      (builtins.filter (u: u.op > 0) users)));
+
   # ── NixOS module ─────────────────────────────────────────────────────────────
 
   nixosModule =
@@ -107,6 +120,7 @@ let
             max-players = 20;
             view-distance = 10;
             simulation-distance = 8;
+            spawn-protection = 0;
             motd = displayName;
           };
 
@@ -116,6 +130,9 @@ let
           };
           files = lib.optionalAttrs (builtins.pathExists (./. + "/${name}/config")) {
             "config" = "${modpack}/config";
+          } // {
+            "whitelist.json" = "${whitelistJson}";
+            "ops.json" = "${opsJson}";
           };
         };
       };

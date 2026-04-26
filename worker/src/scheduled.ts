@@ -39,15 +39,20 @@ async function reconcileServers(env: Env): Promise<void> {
       if (state?.status !== "running" || state.instance_id !== instance.instanceId) {
         await setServerStatus(env, mp.name, "running", instance.instanceId, instance.publicIp, state.fleet_id);
 
-        // Ensure all allowlisted IPs have SG rules (handles the case where
-        // the server was (re)started but some rules weren't added yet)
+        // Re-apply SG rules for ALL allowlisted IPs on every server start.
+        // This handles SG recreation (e.g. after tofu apply) where old rule IDs
+        // are gone but D1 still references them.
         const { results } = await env.DB.prepare(
-          "SELECT * FROM allowlist WHERE modpack=? AND sg_rule_id=''",
+          "SELECT * FROM allowlist WHERE modpack=?",
         )
           .bind(mp.name)
-          .all<{ discord_user_id: string; ip: string }>();
+          .all<{ discord_user_id: string; ip: string; sg_rule_id: string }>();
         for (const row of results) {
           try {
+            // Revoke stale rule if present — ignore errors (rule may not exist)
+            if (row.sg_rule_id) {
+              await revokeSgIngress(env, mp.security_group_id, row.sg_rule_id, row.ip).catch(() => {});
+            }
             const ruleId = await authorizeSgIngress(env, mp.security_group_id, row.ip);
             await env.DB.prepare("UPDATE allowlist SET sg_rule_id=? WHERE modpack=? AND discord_user_id=?")
               .bind(ruleId, mp.name, row.discord_user_id)

@@ -22,12 +22,14 @@ CREATE TABLE IF NOT EXISTS server_state (
 );
 
 CREATE TABLE IF NOT EXISTS allowlist (
-  modpack         TEXT NOT NULL,
-  discord_user_id TEXT NOT NULL,
-  ip              TEXT NOT NULL,
-  sg_rule_id      TEXT NOT NULL DEFAULT '',
-  added_at        INTEGER NOT NULL,
-  expires_at      INTEGER NOT NULL,
+  modpack            TEXT NOT NULL,
+  discord_user_id    TEXT NOT NULL,
+  ip                 TEXT NOT NULL,
+  sg_rule_id         TEXT NOT NULL DEFAULT '',
+  added_at           INTEGER NOT NULL,
+  expires_at         INTEGER NOT NULL,
+  minecraft_username TEXT NOT NULL DEFAULT '',
+  minecraft_uuid     TEXT NOT NULL DEFAULT '',
   PRIMARY KEY (modpack, discord_user_id)
 );
 

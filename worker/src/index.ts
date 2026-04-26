@@ -18,6 +18,19 @@ export default {
       return handleIdleShutdown(req, env);
     }
 
+    // GET /api/whitelist/:modpack — returns active allowlist entries that have a Minecraft UUID,
+    // consumed by the mc-sync-whitelist ExecStartPre on instance startup
+    if (req.method === "GET" && url.pathname.startsWith("/api/whitelist/")) {
+      const modpack = url.pathname.slice("/api/whitelist/".length);
+      const { results } = await env.DB.prepare(
+        "SELECT minecraft_username, minecraft_uuid FROM allowlist WHERE modpack=? AND minecraft_uuid != '' AND expires_at > ?",
+      )
+        .bind(modpack, Date.now())
+        .all<{ minecraft_username: string; minecraft_uuid: string }>();
+      const body = JSON.stringify(results.map((r) => ({ name: r.minecraft_username, uuid: r.minecraft_uuid })));
+      return new Response(body, { headers: { "Content-Type": "application/json" } });
+    }
+
     // PATCH /admin/modpacks/:name — CI updates AMI IDs after builds
     if (req.method === "PATCH" && url.pathname.startsWith("/admin/")) {
       return handleAdmin(req, env, ctx);

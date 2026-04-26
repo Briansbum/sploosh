@@ -46,4 +46,6 @@ export interface AllowlistEntry {
   sg_rule_id: string;
   added_at: number;
   expires_at: number;
+  minecraft_username: string;
+  minecraft_uuid: string;
 }

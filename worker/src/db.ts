@@ -49,17 +49,21 @@ export async function upsertAllowlist(
   ip: string,
   sgRuleId: string,
   ttlDays = 7,
+  minecraftUsername = "",
+  minecraftUuid = "",
 ): Promise<void> {
   const now = Date.now();
   const expires = now + ttlDays * 24 * 60 * 60 * 1000;
   await env.DB.prepare(
-    `INSERT INTO allowlist (modpack, discord_user_id, ip, sg_rule_id, added_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?)
+    `INSERT INTO allowlist (modpack, discord_user_id, ip, sg_rule_id, added_at, expires_at, minecraft_username, minecraft_uuid)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(modpack, discord_user_id)
      DO UPDATE SET ip=excluded.ip, sg_rule_id=excluded.sg_rule_id,
-                   added_at=excluded.added_at, expires_at=excluded.expires_at`,
+                   added_at=excluded.added_at, expires_at=excluded.expires_at,
+                   minecraft_username=CASE WHEN excluded.minecraft_username != '' THEN excluded.minecraft_username ELSE minecraft_username END,
+                   minecraft_uuid=CASE WHEN excluded.minecraft_uuid != '' THEN excluded.minecraft_uuid ELSE minecraft_uuid END`,
   )
-    .bind(modpack, userId, ip, sgRuleId, now, expires)
+    .bind(modpack, userId, ip, sgRuleId, now, expires, minecraftUsername, minecraftUuid)
     .run();
 }
 

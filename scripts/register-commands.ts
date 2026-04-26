@@ -49,12 +49,22 @@ const commands = [
         type: 3, // STRING
         required: false,
       },
+      {
+        name: "minecraft_username",
+        description: "Your Minecraft username (adds you to the server whitelist)",
+        type: 3, // STRING
+        required: false,
+      },
     ],
   },
   {
     name: "revoke",
     description: "Remove your IP from the server allowlist",
     options: [MODPACK_OPTION],
+  },
+  {
+    name: "help",
+    description: "How to install the modpack and use this bot",
   },
 ];
 

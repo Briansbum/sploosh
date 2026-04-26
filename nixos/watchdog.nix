@@ -76,6 +76,7 @@ in
       Type = "simple";
       Restart = "on-failure";
       RestartSec = "30s";
+      TimeoutStartSec = "360s";
       ExecStartPre = "${pkgs.coreutils}/bin/sleep 300";
       ExecStart = "${watchdogScript}/bin/mc-watchdog";
     };
