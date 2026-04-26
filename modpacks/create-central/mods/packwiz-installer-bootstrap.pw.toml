@@ -1,8 +1,0 @@
-name = "packwiz-installer-bootstrap"
-filename = "packwiz-installer-bootstrap.jar"
-side = "client"
-
-[download]
-url = "https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar"
-hash-format = "sha256"
-hash = "a8fbb24dc604278e97f4688e82d3d91a318b98efc08d5dbfcbcbcab6443d116c"
