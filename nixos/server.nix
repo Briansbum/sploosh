@@ -59,12 +59,10 @@ EOF
       if [ -n "$RESTIC_PASS" ]; then
         export RESTIC_REPOSITORY="s3:s3.eu-west-2.amazonaws.com/$S3_BUCKET/$S3_PREFIX"
         export RESTIC_PASSWORD="$RESTIC_PASS"
-        SVCDIR="/srv/minecraft/$MODPACK"
 
         if restic snapshots --json 2>/dev/null | jq -e 'length > 0' >/dev/null; then
-          echo "Restoring latest snapshot to $SVCDIR..."
-          mkdir -p "$SVCDIR"
-          restic restore latest --target "$SVCDIR" --tag "modpack:$MODPACK"
+          echo "Restoring latest snapshot..."
+          restic restore latest --target / --tag "modpack:$MODPACK"
         else
           echo "No snapshots found, starting fresh."
         fi
