@@ -23,5 +23,8 @@ crons = ["*/5 * * * *"]
 # ADMIN_SECRET        (for /admin/* endpoints called by CI)
 # IDLE_WEBHOOK_SECRET (HMAC for idle-shutdown calls from instances)
 
+[assets]
+directory = "./public"
+
 [vars]
 AWS_REGION = "eu-west-2"

@@ -11,8 +11,6 @@ on:
 
 permissions:
   contents: write      # create releases
-  pages: write         # deploy Pages
-  id-token: write      # OIDC for Pages
 
 jobs:
   discover:
@@ -97,38 +95,26 @@ jobs:
           prerelease: true
           make_latest: false
 
-      - name: Build Pages site
+      - name: Stage packDirs for worker
         run: |
-          mkdir -p _site
-          # Copy each pack's static files under its own directory
+          mkdir -p worker/public/packs
           for pack in packdirs/*/; do
             name=$(basename "$pack")
-            mkdir -p "_site/$name"
-            cp -r "$pack". "_site/$name/"
+            mkdir -p "worker/public/packs/$name"
+            cp -r "$pack". "worker/public/packs/$name/"
           done
 
-          # Generate index page
-          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/modpacks-latest"
-          cat > _site/index.html <<HTML
-          <!DOCTYPE html><html><head><meta charset="utf-8">
-          <title>Sploosh Modpacks</title>
-          <style>body{font-family:monospace;max-width:700px;margin:2rem auto;padding:0 1rem}</style>
-          </head><body>
-          <h1>Sploosh Modpacks</h1>
-          HTML
-          for pack in packdirs/*/; do
-            name=$(basename "$pack")
-            echo "<h2>$name</h2>" >> _site/index.html
-            echo "<ul>" >> _site/index.html
-            echo "<li><a href=\"$RELEASE_URL/${name}.mrpack\">Download .mrpack (Prism/Modrinth)</a></li>" >> _site/index.html
-            echo "<li><a href=\"$PAGES_URL/$name/pack.toml\">pack.toml (auto-update URL)</a></li>" >> _site/index.html
-            echo "</ul>" >> _site/index.html
-          done
-          echo "</body></html>" >> _site/index.html
-
-      - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/setup-node@v4
         with:
-          path: _site/
-      - uses: actions/deploy-pages@v4
+          node-version: 20
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+
+      - run: npm ci
+        working-directory: worker
+
+      - name: Deploy worker with pack assets
+        run: npx wrangler deploy
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
