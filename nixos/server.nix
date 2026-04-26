@@ -97,33 +97,42 @@ in
   systemd.services."minecraft-server-create-central" = {
     after = [ "mc-bootstrap.service" ];
     requires = [ "mc-bootstrap.service" ];
+    serviceConfig.EnvironmentFile = "/run/minecraft/env";
+  };
+
+  # Companion service: merges Discord /allowlist players into whitelist.json after
+  # the server is up, then reloads via RCON. Runs as a separate unit to avoid
+  # conflicting with nix-minecraft's own ExecStartPost.
+  systemd.services.mc-sync-whitelist = let
+    syncScript = pkgs.writeShellApplication {
+      name = "mc-sync-whitelist";
+      runtimeInputs = [ pkgs.curl pkgs.jq pkgs.mcrcon ];
+      text = ''
+        MODPACK="''${SPLOOSH_MODPACK:-create-central}"
+        WHITELIST="/srv/minecraft/$MODPACK/whitelist.json"
+        DYNAMIC=$(curl -sf "https://sploosh.workers.dev/api/whitelist/$MODPACK" || echo "[]")
+        if [ -f "$WHITELIST" ]; then
+          MERGED=$(jq -s '.[0] + .[1] | unique_by(.uuid)' "$WHITELIST" <(echo "$DYNAMIC"))
+          echo "$MERGED" > "$WHITELIST"
+        fi
+        # Retry until RCON is up (server takes ~10s to be ready)
+        for i in $(seq 1 12); do
+          if mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist reload" 2>/dev/null; then
+            break
+          fi
+          sleep 5
+        done
+      '';
+    };
+  in {
+    description = "Sync Discord allowlist into Minecraft whitelist";
+    after = [ "minecraft-server-create-central.service" ];
+    bindsTo = [ "minecraft-server-create-central.service" ];
+    wantedBy = [ "minecraft-server-create-central.service" ];
     serviceConfig = {
+      Type = "oneshot";
       EnvironmentFile = "/run/minecraft/env";
-      # Runs after nix-minecraft's own ExecStartPre has written whitelist.json from
-      # the nix store, merging in any players added via /allowlist in Discord.
-      # Uses ExecStartPost so it runs after the server is up, then reloads via RCON.
-      ExecStartPost = let
-        syncScript = pkgs.writeShellApplication {
-          name = "mc-sync-whitelist";
-          runtimeInputs = [ pkgs.curl pkgs.jq pkgs.mcrcon ];
-          text = ''
-            MODPACK="''${SPLOOSH_MODPACK:-create-central}"
-            WHITELIST="/srv/minecraft/$MODPACK/whitelist.json"
-            DYNAMIC=$(curl -sf "https://sploosh.workers.dev/api/whitelist/$MODPACK" || echo "[]")
-            if [ -f "$WHITELIST" ]; then
-              MERGED=$(jq -s '.[0] + .[1] | unique_by(.uuid)' "$WHITELIST" <(echo "$DYNAMIC"))
-              echo "$MERGED" > "$WHITELIST"
-            fi
-            # Reload whitelist in-game — retry until RCON is up (server takes ~10s to start)
-            for i in $(seq 1 12); do
-              if mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist reload" 2>/dev/null; then
-                break
-              fi
-              sleep 5
-            done
-          '';
-        };
-      in "+${syncScript}/bin/mc-sync-whitelist";
+      ExecStart = "${syncScript}/bin/mc-sync-whitelist";
     };
   };
 }
