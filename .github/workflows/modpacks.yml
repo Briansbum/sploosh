@@ -110,17 +110,35 @@ jobs:
           cat > _site/index.html <<HTML
           <!DOCTYPE html><html><head><meta charset="utf-8">
           <title>Sploosh Modpacks</title>
-          <style>body{font-family:monospace;max-width:700px;margin:2rem auto;padding:0 1rem}code{background:#f4f4f4;padding:2px 6px;border-radius:3px}</style>
+          <style>
+            body{font-family:monospace;max-width:700px;margin:2rem auto;padding:0 1rem}
+            code{background:#f4f4f4;padding:2px 6px;border-radius:3px;word-break:break-all}
+            .steps{margin:0;padding-left:1.4rem;line-height:2}
+            details{margin:1rem 0;border:1px solid #ddd;border-radius:4px;padding:.5rem 1rem}
+            summary{cursor:pointer;font-weight:bold}
+          </style>
           </head><body>
           <h1>Sploosh Modpacks</h1>
+          <details open><summary>How to join</summary>
+          <ol class="steps">
+            <li>Download and install <a href="https://prismlauncher.org">Prism Launcher</a></li>
+            <li>Click <b>Add Instance</b> → <b>From URL</b> and paste the install link below</li>
+            <li>Launch the instance once to let it download mods</li>
+            <li>Connect to the server — ask in Discord for the address</li>
+          </ol>
+          <p><b>Auto-updates:</b> After importing, right-click the instance → <b>Edit</b> → <b>Mods</b> tab → <b>packwiz</b> and paste the pack.toml URL. Mods will update automatically on each launch.</p>
+          </details>
           HTML
           for pack in packdirs/*/; do
             name=$(basename "$pack" | sed 's/^packdir-//')
             display=$(grep '^name' "_site/$name/pack.toml" | cut -d'"' -f2)
+            mc=$(grep '^minecraft' "_site/$name/pack.toml" | cut -d'"' -f2)
             cat >> _site/index.html <<HTML
-          <h2>$display</h2><ul>
-          <li><b>Install:</b> Prism → Add Instance → From URL: <code>$RELEASE_URL/$name.mrpack</code></li>
-          <li><b>Auto-update URL</b> (Edit Instance → packwiz): <code>$PAGES_URL/$name/pack.toml</code></li>
+          <h2>$display</h2>
+          <p>Minecraft $mc</p>
+          <ul class="steps">
+            <li><b>Install link:</b> <code>$RELEASE_URL/$name.mrpack</code></li>
+            <li><b>Auto-update URL:</b> <code>$PAGES_URL/$name/pack.toml</code></li>
           </ul>
           HTML
           done
