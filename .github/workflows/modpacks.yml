@@ -122,11 +122,17 @@ jobs:
           <details open><summary>How to join</summary>
           <ol class="steps">
             <li>Download and install <a href="https://prismlauncher.org">Prism Launcher</a></li>
-            <li>Click <b>Add Instance</b> → <b>From URL</b> and paste the install link below</li>
+            <li>Click <b>Add Instance</b> → <b>From URL</b> and paste the install link for your pack below</li>
             <li>Launch the instance once to let it download mods</li>
             <li>Connect to the server — ask in Discord for the address</li>
           </ol>
-          <p><b>Auto-updates:</b> After importing, right-click the instance → <b>Edit</b> → <b>Mods</b> tab → <b>packwiz</b> and paste the pack.toml URL. Mods will update automatically on each launch.</p>
+          <details><summary>Set up auto-updates (recommended)</summary>
+          <ol class="steps">
+            <li>Right-click the instance → <b>Edit</b> → <b>Settings</b> → tick <b>Custom commands</b></li>
+            <li>Set the <b>Pre-launch command</b> to the auto-update command shown for your pack below</li>
+            <li><i>(Optional)</i> Move <code>packwiz-installer-bootstrap.jar</code> from <code>mods/</code> to the <code>.minecraft</code> root to suppress the "not a real mod" warning from NeoForge</li>
+          </ol>
+          </details>
           </details>
           HTML
           for pack in packdirs/*/; do
@@ -138,7 +144,7 @@ jobs:
           <p>Minecraft $mc</p>
           <ul class="steps">
             <li><b>Install link:</b> <code>$RELEASE_URL/$name.mrpack</code></li>
-            <li><b>Auto-update URL:</b> <code>$PAGES_URL/$name/pack.toml</code></li>
+            <li><b>Pre-launch command:</b> <code>&quot;\$INST_JAVA&quot; -jar &quot;\$INST_MC_DIR/mods/packwiz-installer-bootstrap.jar&quot; $PAGES_URL/$name/pack.toml</code></li>
           </ul>
           HTML
           done
