@@ -7,8 +7,11 @@ const HELP_TEXT = `\
 1. Download & install Prism Launcher: <https://prismlauncher.org>
 2. Go to the modpack page: <${PAGES_URL}>
 3. Find the pack you want, copy its **Install link**
-4. In Prism, click **Add Instance → From URL** and paste the link
+4. In Prism, click **Add Instance → Import** and paste the link
 5. Launch the instance — mods download automatically on first run.
+
+**Auto-updates (recommended)**
+After installing, right-click the instance → **Edit** → **Settings** → tick **Custom commands**, then set the **Pre-launch command** to the command shown for your pack on the modpack page.
 
 **Commands**
 \`/modpacks\` — list available packs and their pack URLs

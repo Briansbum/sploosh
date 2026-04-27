@@ -122,7 +122,7 @@ jobs:
           <details open><summary>How to join</summary>
           <ol class="steps">
             <li>Download and install <a href="https://prismlauncher.org">Prism Launcher</a></li>
-            <li>Click <b>Add Instance</b> → <b>From URL</b> and paste the install link for your pack below</li>
+            <li>Click <b>Add Instance</b> → <b>Import</b> and paste the install link for your pack below</li>
             <li>Launch the instance once to let it download mods</li>
             <li>Connect to the server — ask in Discord for the address</li>
           </ol>
