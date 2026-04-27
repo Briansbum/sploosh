@@ -86,6 +86,35 @@
           '';
         };
 
+        # nix run .#rehash [packname]  — builds with fakeHash, captures the
+        # "got:" hash, and writes it back into modpacks/default.nix.
+        apps.rehash = {
+          type = "app";
+          program = toString (pkgs.writeShellApplication {
+            name = "rehash";
+            runtimeInputs = [ pkgs.gnused ];
+            text = ''
+              PACK=''${1:-create-central}
+              NIXFILE="$(git rev-parse --show-toplevel)/modpacks/default.nix"
+
+              FAKE="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+              sed -i "s|modpackHash = \"sha256-[^\"]*\";|modpackHash = \"$FAKE\";|" "$NIXFILE"
+
+              echo "Building $PACK to derive correct hash (hash mismatch expected)…"
+              HASH=$(nix build ".#''${PACK}-mrpack" --no-link 2>&1 | grep "got:" | awk '{print $NF}' || true)
+
+              if [ -z "$HASH" ]; then
+                echo "ERROR: could not extract hash — restoring default.nix" >&2
+                git checkout -- "$NIXFILE"
+                exit 1
+              fi
+
+              sed -i "s|modpackHash = \"$FAKE\";|modpackHash = \"$HASH\";|" "$NIXFILE"
+              echo "Updated $NIXFILE → $HASH"
+            '';
+          } + "/bin/rehash");
+        };
+
         # nix build .#all-the-forge-10-mrpack
         # nix build .#all-the-forge-10-packdir
         packages = lib.foldlAttrs (

@@ -14,7 +14,7 @@ let
       # shellcheck source=/dev/null
       source /run/minecraft/env
 
-      SVCDIR="/var/lib/minecraft/$SPLOOSH_MODPACK"
+      SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
       RCON_PORT=25575
 
       # Flush world to disk before snapshotting
@@ -50,7 +50,7 @@ let
       # shellcheck source=/dev/null
       source /run/minecraft/env
 
-      SVCDIR="/var/lib/minecraft/$SPLOOSH_MODPACK"
+      SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
 
       mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-off" || true
       mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-all flush" || true
