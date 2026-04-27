@@ -12,7 +12,8 @@ let
       set -euo pipefail
 
       # shellcheck source=/dev/null
-      source /run/minecraft/env
+      # set -a exports all variables so child processes (restic) inherit them
+      set -a; source /run/minecraft/env; set +a
 
       SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
       RCON_PORT=25575
@@ -48,7 +49,7 @@ let
     text = ''
       set -euo pipefail
       # shellcheck source=/dev/null
-      source /run/minecraft/env
+      set -a; source /run/minecraft/env; set +a
 
       SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
 

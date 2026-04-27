@@ -60,11 +60,13 @@ EOF
         export RESTIC_REPOSITORY="s3:s3.eu-west-2.amazonaws.com/$S3_BUCKET/$S3_PREFIX"
         export RESTIC_PASSWORD="$RESTIC_PASS"
 
-        if restic snapshots --json 2>/dev/null | jq -e 'length > 0' >/dev/null; then
+        if ! restic snapshots --json 2>/dev/null | jq -e 'length > 0' >/dev/null 2>&1; then
+          echo "No repo or no snapshots — initialising restic repository..."
+          restic init || true
+          echo "Starting fresh."
+        else
           echo "Restoring latest snapshot..."
           restic restore latest --target / --tag "modpack:$MODPACK"
-        else
-          echo "No snapshots found, starting fresh."
         fi
       fi
 
