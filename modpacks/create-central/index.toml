@@ -126,6 +126,11 @@ hash = "b5bbbdef134fb735d4a741ccb85b46c6b1707e8e974a09bdcc1dcd785c0f172e"
 metafile = true
 
 [[files]]
+file = "mods/distanthorizons.pw.toml"
+hash = "133e7c9295b9e7e8577b5ca36cf9548b4c590eeb0708fdeb9cb59c2758759ac8"
+metafile = true
+
+[[files]]
 file = "mods/dragonlib.pw.toml"
 hash = "6be0888f4633c093f455d9e6d27aa68f0c8879cc2c12a8a4fc569eb22c451bfc"
 metafile = true
@@ -178,6 +183,16 @@ metafile = true
 [[files]]
 file = "mods/iris.pw.toml"
 hash = "f67aa60c765593a8c70f78296a460349c6aef5f4a16d173eae02e8803b545ad4"
+metafile = true
+
+[[files]]
+file = "mods/jei.pw.toml"
+hash = "5367193d3f87b7bc5a81bcd64a5b96a843e76d4df7a83c8bb7e1911aa82dd52e"
+metafile = true
+
+[[files]]
+file = "mods/lambdynamiclights.pw.toml"
+hash = "d77c41bf5a8dd470d65e7946d507657a910b54d2e76f4b3ced4fe4addc2d52d4"
 metafile = true
 
 [[files]]
