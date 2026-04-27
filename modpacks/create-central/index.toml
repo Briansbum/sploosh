@@ -241,11 +241,6 @@ hash = "735f0a8e564e8c80c282a7ba97fe77c34edec0402883f7154fd0206572537afe"
 metafile = true
 
 [[files]]
-file = "mods/simple-backups.pw.toml"
-hash = "b3b444ca79a5786d5c7589a7119fcf4c3e4cf73c70860c17acb63c88fc06749a"
-metafile = true
-
-[[files]]
 file = "mods/slice-and-dice.pw.toml"
 hash = "18ca1d438084a8578f4b75f12233db58ca1deec55f117fb875afa21f2c021559"
 metafile = true
