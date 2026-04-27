@@ -1,0 +1,13 @@
+name = "Create: Structures Arise"
+filename = "create_structures_arise-174.47.46 Release-neoforge-1.21.1.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/9enMEvoc/versions/BqB1xPS9/create_structures_arise-174.47.46%20Release-neoforge-1.21.1.jar"
+hash-format = "sha512"
+hash = "6b5078b357f021ead4ff269fc279af86f68281c2ea0f44b681099d4bb840df2893e7b028c93d4bea3f7a33e831c302984d0bed4180cbede801a56179212da517"
+
+[update]
+[update.modrinth]
+mod-id = "9enMEvoc"
+version = "BqB1xPS9"
