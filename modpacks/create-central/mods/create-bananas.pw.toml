@@ -1,0 +1,13 @@
+name = "Create: Bananas"
+filename = "createbananas-1.0.0.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/YNijEAMC/versions/UM50Zj5R/createbananas-1.0.0.jar"
+hash-format = "sha512"
+hash = "589adddf51b3680fc097136109c0fd921bf1c2ed505c58da6da1500bc5535b41aacfd294b281f8bfce50bbc42681476cd737d498c9114ecfa8d8724f9efae387"
+
+[update]
+[update.modrinth]
+mod-id = "YNijEAMC"
+version = "UM50Zj5R"

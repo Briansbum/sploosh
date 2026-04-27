@@ -31,6 +31,11 @@ hash = "74f3358e1070f1163d14cb62ee768a389bd758f36b5c21471910e43fbcfacc9e"
 metafile = true
 
 [[files]]
+file = "mods/create-bananas.pw.toml"
+hash = "da3dcad4e59c3ff6b228a3143582967bb35e01baef1496163cc4d928bb17a689"
+metafile = true
+
+[[files]]
 file = "mods/create-big-cannons.pw.toml"
 hash = "c0ce5acc926fd747135f330cb3e53b847e5c05ed950b96f7cbe0d1159aefa285"
 metafile = true
@@ -103,6 +108,11 @@ metafile = true
 [[files]]
 file = "mods/create-railways-navigator.pw.toml"
 hash = "f2a31a21fa9bb92922c52d245adc54e1b09ba0474e8b3f663c8c0bc8d48bb60c"
+metafile = true
+
+[[files]]
+file = "mods/create-smoke-buffers.pw.toml"
+hash = "fcfad54d985bbb7065956bae52b949837644c51c639f99f1adb80f72f81728e9"
 metafile = true
 
 [[files]]
@@ -217,7 +227,7 @@ metafile = true
 
 [[files]]
 file = "mods/let-sleeping-dogs-lie.pw.toml"
-hash = "438075bcc066211a734e0f81b1e1ba2efbd419f9f00d1554659a99290b5013dd"
+hash = "1d35574ade0f8a5b9eb808b734b65ff11aa8b7ea70c647547d28e90d1c0bd8f6"
 metafile = true
 
 [[files]]
