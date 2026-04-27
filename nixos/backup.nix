@@ -19,6 +19,7 @@ let
       RCON_PORT=25575
 
       # Flush world to disk before snapshotting
+      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §eBacking up — expect a brief lag spike" || true
       mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-off" || true
       mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-all flush" || true
 
@@ -30,6 +31,7 @@ let
 
       # Re-enable autosave
       mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-on" || true
+      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §aBackup done" || true
 
       # Prune old snapshots (cheap: only runs after backup)
       restic forget \
