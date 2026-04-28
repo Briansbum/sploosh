@@ -37,9 +37,9 @@ let
       # Prune old snapshots (cheap: only runs after backup)
       restic forget \
         --tag "modpack:$SPLOOSH_MODPACK" \
-        --keep-hourly 12 \
-        --keep-daily 14 \
-        --keep-weekly 8 \
+        --keep-hourly 24 \
+        --keep-daily 7 \
+        --keep-weekly 4 \
         --prune
     '';
   };
@@ -140,18 +140,23 @@ in
     };
   };
 
-  # Final backup — runs before system shutdown
+  # Final backup — runs before system shutdown.
+  # Pattern: RemainAfterExit=yes with ExecStop is the reliable way to hook
+  # into systemd shutdown. ExecStart=/bin/true activates the unit at boot;
+  # systemd stops it during shutdown which fires ExecStop = the backup script.
   systemd.services.mc-backup-final = {
     description = "Minecraft final backup (shutdown)";
     after = [ "mc-bootstrap.service" ];
-    # Ensure this runs before the minecraft service stops
+    requires = [ "mc-bootstrap.service" ];
     before = [ "shutdown.target" "reboot.target" "halt.target" ];
-    wantedBy = [ "shutdown.target" "reboot.target" "halt.target" ];
+    wantedBy = [ "multi-user.target" ];
+    unitConfig.DefaultDependencies = false;
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${finalBackupScript}/bin/mc-backup-final";
-      TimeoutStartSec = "300"; # 5 minutes max for final backup
+      ExecStart = "/bin/true";
+      ExecStop = "${finalBackupScript}/bin/mc-backup-final";
+      TimeoutStopSec = "300";
     };
   };
 

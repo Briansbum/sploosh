@@ -1,0 +1,21 @@
+# Easier Sleeping - server config
+# This file is seeded into each world's serverconfig/ on first load.
+
+# Percentage of online players that must be in bed to skip the night (0 = anyone, 100 = everyone)
+sleep_percent = 50
+
+# Messages shown when a player enters bed (%player% is replaced with their name)
+sleep_messages = ["%player% is sleeping..."]
+
+# Messages shown when enough players are sleeping and morning arrives
+morning_messages = ["Good morning! Rise and shine."]
+
+# Messages shown when a player gets out of bed before night is skipped
+wake_messages = ["%player% got out of bed."]
+
+# Reset rest timers for all players when the threshold is met
+all_players_rest = false
+
+# Dimensions where sleep is active
+dimensions = ["minecraft:overworld"]
+dimension_list_type = "SLEEP_ACTIVE"

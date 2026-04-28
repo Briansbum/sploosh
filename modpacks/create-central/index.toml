@@ -1,6 +1,10 @@
 hash-format = "sha256"
 
 [[files]]
+file = "defaultconfigs/easier_sleeping-server.toml"
+hash = "45fa406dbd319b5b45a80a9a4ae4ca8dea7af7dfc93b963bfd8d738f0765b840"
+
+[[files]]
 file = "mods/appleskin.pw.toml"
 hash = "716d930feff599bf9ce732e05979fbae8025dc8a3c13ccf4f1cb207a70883bc6"
 metafile = true
@@ -18,6 +22,11 @@ metafile = true
 [[files]]
 file = "mods/bellsandwhistles.pw.toml"
 hash = "e1f4a53e3e52b534add5dd018597fefd345d9bd6350b9c46ef0ec281fc62af8e"
+metafile = true
+
+[[files]]
+file = "mods/configured.pw.toml"
+hash = "af4dc4828902eae1784568632a749fe9a442943f1570ac0ba3ea75e79934be41"
 metafile = true
 
 [[files]]
@@ -143,6 +152,11 @@ metafile = true
 [[files]]
 file = "mods/dragonlib.pw.toml"
 hash = "6be0888f4633c093f455d9e6d27aa68f0c8879cc2c12a8a4fc569eb22c451bfc"
+metafile = true
+
+[[files]]
+file = "mods/easier-sleeping.pw.toml"
+hash = "43055bc50bd47d3cf0f3330c50cb4b91ee50a5127555e0e7c6ef932f42fc800c"
 metafile = true
 
 [[files]]

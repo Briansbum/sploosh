@@ -121,6 +121,7 @@ let
             view-distance = 10;
             simulation-distance = 8;
             spawn-protection = 0;
+            allow-flight = true;
             motd = displayName;
           };
 
@@ -130,6 +131,8 @@ let
           };
           files = lib.optionalAttrs (builtins.pathExists (./. + "/${name}/config")) {
             "config" = "${modpack}/config";
+          } // lib.optionalAttrs (builtins.pathExists (./. + "/${name}/defaultconfigs")) {
+            "defaultconfigs" = "${modpack}/defaultconfigs";
           } // {
             "whitelist.json" = "${whitelistJson}";
             "ops.json" = "${opsJson}";
