@@ -3,6 +3,7 @@
 // 2. Sweep expired allowlist entries and revoke their SG rules
 import { listModpacks, getServerState, setServerStatus, getExpiredAllowlist, removeAllowlist } from "./db";
 import { getFleetInstance, describeFleet, revokeSgIngress, authorizeSgIngress } from "./aws/ec2";
+import { setARecord } from "./cloudflare/dns";
 import type { Env } from "./types";
 
 export async function handleScheduled(env: Env): Promise<void> {
@@ -38,6 +39,7 @@ async function reconcileServers(env: Env): Promise<void> {
       // Fleet has a running instance and is healthy
       if (state?.status !== "running" || state.instance_id !== instance.instanceId) {
         await setServerStatus(env, mp.name, "running", instance.instanceId, instance.publicIp, state.fleet_id);
+        await setARecord(env, mp.name, instance.publicIp).catch(() => {});
 
         // Re-apply SG rules for ALL allowlisted IPs on every server start.
         // This handles SG recreation (e.g. after tofu apply) where old rule IDs

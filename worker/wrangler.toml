@@ -22,6 +22,9 @@ crons = ["*/5 * * * *"]
 # DISCORD_BOT_TOKEN
 # ADMIN_SECRET        (for /admin/* endpoints called by CI)
 # IDLE_WEBHOOK_SECRET (HMAC for idle-shutdown calls from instances)
+# CF_API_TOKEN        (Cloudflare API token, Zone.DNS:Edit scoped to CF_ZONE_ID)
+# CF_ZONE_ID          (Cloudflare zone ID for xoxominelifexoxo.uk)
 
 [vars]
 AWS_REGION = "eu-west-2"
+CF_DOMAIN = "xoxominelifexoxo.uk"

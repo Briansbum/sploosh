@@ -17,6 +17,11 @@ export interface Env {
 
   // Comma-separated list of Discord guild IDs permitted to use this bot
   ALLOWED_GUILD_IDS: string;
+
+  // Cloudflare DNS (for per-modpack subdomains)
+  CF_API_TOKEN: string;
+  CF_ZONE_ID: string;
+  CF_DOMAIN: string;
 }
 
 export interface Modpack {

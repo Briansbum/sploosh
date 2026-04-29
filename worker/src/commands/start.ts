@@ -1,5 +1,6 @@
 import { getModpack, getServerState, setServerStatus } from "../db";
 import { createFleet, deleteFleet, getFleetInstance } from "../aws/ec2";
+import { setARecord, modpackHostname } from "../cloudflare/dns";
 import { checkRateLimit } from "../ratelimit";
 import type { Env } from "../types";
 
@@ -44,10 +45,10 @@ export async function handleStart(
   }
 
   if (state?.status === "running" || state?.status === "starting") {
-    const ip = state.public_ip ? `\nConnect: \`${state.public_ip}:25565\`` : "";
+    const host = state.public_ip ? `\nConnect: \`${modpackHostname(env, modpackName)}:25565\`` : "";
     return Response.json({
       type: 4,
-      data: { content: `**${modpack.display_name}** is already ${state.status}.${ip}`, flags: 64 },
+      data: { content: `**${modpack.display_name}** is already ${state.status}.${host}`, flags: 64 },
     });
   }
 
@@ -87,11 +88,13 @@ async function doStart(
     }
 
     await setServerStatus(env, modpackName, "running", instance.instanceId, instance.publicIp, fleetId);
+    await setARecord(env, modpackName, instance.publicIp);
 
+    const hostname = modpackHostname(env, modpackName);
     await patchReply(
       env,
       token,
-      `🟢 **${displayName}** is starting up!\nConnect: \`${instance.publicIp}:25565\`\n(May take 3-5 min for the world to load)`,
+      `🟢 **${displayName}** is starting up!\nConnect: \`${hostname}:25565\`\n(May take 3-5 min for the world to load)`,
     );
   } catch (e) {
     if (fleetId) {
