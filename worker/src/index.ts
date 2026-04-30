@@ -1,6 +1,8 @@
 import { handleInteraction } from "./discord/router";
 import { handleScheduled } from "./scheduled";
 import { handleAdmin } from "./admin";
+import { getServerState, setServerStatus } from "./db";
+import { deleteFleet } from "./aws/ec2";
 import type { Env } from "./types";
 
 export default {
@@ -73,11 +75,11 @@ async function handleIdleShutdown(req: Request, env: Env): Promise<Response> {
   }
 
   const { modpack } = JSON.parse(body);
-  await env.DB.prepare(
-    "UPDATE server_state SET status='stopping', instance_id=NULL, public_ip=NULL WHERE modpack=?",
-  )
-    .bind(modpack)
-    .run();
+  const state = await getServerState(env, modpack);
+  if (state?.fleet_id) {
+    await deleteFleet(env, state.fleet_id).catch(() => {});
+  }
+  await setServerStatus(env, modpack, "stopping", null, null, null);
 
   return new Response("ok");
 }
