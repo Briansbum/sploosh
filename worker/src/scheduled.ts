@@ -37,7 +37,7 @@ async function reconcileServers(env: Env): Promise<void> {
 
     if (instance?.publicIp && !fleetWindingDown) {
       // Fleet has a running instance and is healthy — always keep DNS current
-      await setARecord(env, mp.name, instance.publicIp).catch(() => {});
+      await setARecord(env, mp.name, instance.publicIp).catch((e) => console.error(`DNS update failed for ${mp.name}:`, e));
       if (state?.status !== "running" || state.instance_id !== instance.instanceId) {
         await setServerStatus(env, mp.name, "running", instance.instanceId, instance.publicIp, state.fleet_id);
 
