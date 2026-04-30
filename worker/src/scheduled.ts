@@ -36,10 +36,10 @@ async function reconcileServers(env: Env): Promise<void> {
       fleetInfo?.activityStatus === "pending-termination";
 
     if (instance?.publicIp && !fleetWindingDown) {
-      // Fleet has a running instance and is healthy
+      // Fleet has a running instance and is healthy — always keep DNS current
+      await setARecord(env, mp.name, instance.publicIp).catch(() => {});
       if (state?.status !== "running" || state.instance_id !== instance.instanceId) {
         await setServerStatus(env, mp.name, "running", instance.instanceId, instance.publicIp, state.fleet_id);
-        await setARecord(env, mp.name, instance.publicIp).catch(() => {});
 
         // Re-apply SG rules for ALL allowlisted IPs on every server start.
         // This handles SG recreation (e.g. after tofu apply) where old rule IDs
