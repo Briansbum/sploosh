@@ -64,7 +64,7 @@ export async function handleInteraction(
       case "revoke":
         return handleRevoke(interaction, env, userId);
       case "help":
-        return handleHelp();
+        return handleHelp(interaction, env);
       default:
         return json({ type: 4, data: { content: "Unknown command." } });
     }

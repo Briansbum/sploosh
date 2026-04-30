@@ -65,6 +65,7 @@ const commands = [
   {
     name: "help",
     description: "How to install the modpack and use this bot",
+    options: [{ ...MODPACK_OPTION, required: false }],
   },
 ];
 
