@@ -147,5 +147,6 @@ in
   packages = {
     mrpack = mrpackDrv;
     packDir = packDirDrv;
+    modpack = modpack;
   };
 }

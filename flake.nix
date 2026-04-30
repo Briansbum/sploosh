@@ -101,7 +101,7 @@
               sed -i "s|modpackHash = \"sha256-[^\"]*\";|modpackHash = \"$FAKE\";|" "$NIXFILE"
 
               echo "Building $PACK to derive correct hash (hash mismatch expected)…"
-              HASH=$(nix build ".#''${PACK}-mrpack" --no-link 2>&1 | grep "got:" | awk '{print $NF}' || true)
+              HASH=$(nix build ".#''${PACK}-modpack" --no-link 2>&1 | grep "got:" | awk '{print $NF}' || true)
 
               if [ -z "$HASH" ]; then
                 echo "ERROR: could not extract hash — restoring default.nix" >&2
@@ -123,6 +123,7 @@
           // {
             "${name}-mrpack" = mp.packages.mrpack;
             "${name}-packdir" = mp.packages.packDir;
+            "${name}-modpack" = mp.packages.modpack;
           }
         ) { } modpacks;
       }
