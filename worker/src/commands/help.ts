@@ -8,7 +8,7 @@ function packInstallSection(displayName: string, mrpackUrl: string, packTomlUrl:
 2. In Prism, click **Add Instance → Import** and paste this link:
    \`${mrpackUrl}\`
 3. Right-click the instance → **Edit** → **Settings** → tick **Custom commands**, then set the **Pre-launch command** to:
-   \`java -jar packwiz-installer-bootstrap.jar ${packTomlUrl}\`
+   \`"$INST_JAVA" -jar "$INST_MC_DIR/mods/packwiz-installer-bootstrap.jar" ${packTomlUrl}\`
 4. Launch — mods will update automatically on every launch.
    *(If you see a warning about a mod on launch, click the button to go to the main menu.)*`;
 }
@@ -54,7 +54,7 @@ export async function handleHelp(interaction: Record<string, unknown>, env: Env)
 1. Download & install Prism Launcher: <https://prismlauncher.org>
 2. In Prism, click **Add Instance → Import** and paste the install link for your pack:
 ${packList}
-3. Right-click the instance → **Edit** → **Settings** → tick **Custom commands**, then set the **Pre-launch command** shown by \`/help modpack:<name>\` for your pack.
+3. Right-click the instance → **Edit** → **Settings** → tick **Custom commands**, then set the **Pre-launch command** — run \`/help modpack:<name>\` to get the exact command for your pack.
 4. Launch — mods will update automatically on every launch.
    *(If you see a warning about a mod on launch, click the button to go to the main menu.)*
 
