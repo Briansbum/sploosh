@@ -1,6 +1,6 @@
-// /admin/* endpoints — called by CI to update AMI IDs after builds.
-// Protected by HMAC: X-Sploosh-Sig = HMAC-SHA256(secret, "<modpack>:<ami_id>")
-import { updateModpackAmi } from "./db";
+// /admin/* endpoints — called by CI to update modpack fields after builds.
+// Protected by HMAC: X-Sploosh-Sig = HMAC-SHA256(secret, "<modpack>:<raw-body>")
+import { updateModpackFields } from "./db";
 import type { Env } from "./types";
 
 export async function handleAdmin(req: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
@@ -12,17 +12,16 @@ export async function handleAdmin(req: Request, env: Env, _ctx: ExecutionContext
   }
   const modpackName = parts[2];
 
-  // Verify HMAC
+  // Verify HMAC over modpack name + raw body
   const body = await req.text();
   const sig = req.headers.get("X-Sploosh-Sig") ?? "";
-  const { ami_id } = JSON.parse(body);
-
-  const expected = await hmacHex(env.ADMIN_SECRET, `${modpackName}:${ami_id}`);
+  const expected = await hmacHex(env.ADMIN_SECRET, `${modpackName}:${body}`);
   if (!timingSafeEqual(sig, expected)) {
     return new Response("unauthorized", { status: 401 });
   }
 
-  await updateModpackAmi(env, modpackName, ami_id);
+  const fields = JSON.parse(body) as Record<string, string>;
+  await updateModpackFields(env, modpackName, fields);
   return new Response("ok");
 }
 

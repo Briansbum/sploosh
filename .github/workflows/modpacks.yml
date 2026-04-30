@@ -155,3 +155,21 @@ jobs:
         with:
           path: _site/
       - uses: actions/deploy-pages@v4
+
+      - name: Register pack URLs in D1
+        env:
+          CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
+          CF_WORKER_SECRET: ${{ secrets.CF_WORKER_SECRET }}
+        run: |
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/modpacks-latest"
+          for pack in packdirs/*/; do
+            name=$(basename "$pack" | sed 's/^packdir-//')
+            body="{\"mrpack_url\": \"${RELEASE_URL}/${name}.mrpack\", \"pack_toml_url\": \"${PAGES_URL}/${name}/pack.toml\"}"
+            hmac=$(echo -n "${name}:${body}" | openssl dgst -sha256 -hmac "${CF_WORKER_SECRET}" | awk '{print $2}')
+            curl -sf -X PATCH "${CF_WORKER_URL}/admin/modpacks/${name}" \
+              -H "Content-Type: application/json" \
+              -H "X-Sploosh-Sig: ${hmac}" \
+              -d "${body}"
+            echo "  Updated ${name}"
+          done

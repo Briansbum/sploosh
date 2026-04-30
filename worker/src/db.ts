@@ -88,6 +88,11 @@ export async function getExpiredAllowlist(env: Env): Promise<AllowlistEntry[]> {
   return r.results;
 }
 
-export async function updateModpackAmi(env: Env, modpack: string, amiId: string): Promise<void> {
-  await env.DB.prepare("UPDATE modpacks SET ami_id=? WHERE name=?").bind(amiId, modpack).run();
+export async function updateModpackFields(env: Env, modpack: string, fields: Record<string, string>): Promise<void> {
+  const allowed = ["ami_id", "mrpack_url", "pack_toml_url"];
+  const entries = Object.entries(fields).filter(([k]) => allowed.includes(k));
+  if (entries.length === 0) return;
+  const set = entries.map(([k]) => `${k}=?`).join(", ");
+  const values = entries.map(([, v]) => v);
+  await env.DB.prepare(`UPDATE modpacks SET ${set} WHERE name=?`).bind(...values, modpack).run();
 }

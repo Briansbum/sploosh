@@ -98,12 +98,13 @@ echo "  AMI_ID: $AMI_ID"
 
 echo "==> Updating D1 via worker admin endpoint..."
 if [ -n "${CF_WORKER_URL:-}" ]; then
-  HMAC=$(echo -n "${MODPACK}:${AMI_ID}" | \
+  BODY="{\"ami_id\": \"${AMI_ID}\"}"
+  HMAC=$(echo -n "${MODPACK}:${BODY}" | \
     openssl dgst -sha256 -hmac "${CF_WORKER_SECRET:?}" | awk '{print $2}')
   curl -sf -X PATCH "${CF_WORKER_URL}/admin/modpacks/${MODPACK}" \
     -H "Content-Type: application/json" \
     -H "X-Sploosh-Sig: $HMAC" \
-    -d "{\"ami_id\": \"$AMI_ID\"}"
+    -d "$BODY"
   echo "  D1 updated."
 fi
 
