@@ -9,12 +9,6 @@ export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
 
-    // GET /whatismyip — lets users discover their public IP for /allowlist
-    if (req.method === "GET" && url.pathname === "/whatismyip") {
-      const ip = req.headers.get("CF-Connecting-IP") ?? "unknown";
-      return new Response(ip, { headers: { "Content-Type": "text/plain" } });
-    }
-
     // GET /idle-shutdown — called by the server watchdog before poweroff
     if (req.method === "POST" && url.pathname === "/idle-shutdown") {
       return handleIdleShutdown(req, env);
