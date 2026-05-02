@@ -1,0 +1,13 @@
+name = "CB: Compressed Blocks"
+filename = "compressedblocks-neoforge-1.21.1-1.7.2-1.21.1.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/IQRVlbit/versions/wjts21Fu/compressedblocks-neoforge-1.21.1-1.7.2-1.21.1.jar"
+hash-format = "sha512"
+hash = "ddef1a0bf9d27adface154dc4a8a0185d987ecd3fdf2523069bc0641e18338bfa4b44e0609e08bcf304532e52586285fd6dce148ce310468cae0e69c22d11acb"
+
+[update]
+[update.modrinth]
+mod-id = "IQRVlbit"
+version = "wjts21Fu"

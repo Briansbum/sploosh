@@ -1,0 +1,13 @@
+name = "Clayful 512x"
+filename = "Clayful 512x Demo 1.4.2.4.zip"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/uCy5P8TZ/versions/ZzztWgYn/Clayful%20512x%20Demo%201.4.2.4.zip"
+hash-format = "sha512"
+hash = "8c3572ade69361bea2835fe2142fa9b6edbcdc87addd3e39c14e1206fa5aecc84f843aa59f61485412d1d623b1bf9822b17994573d84133e0274c3a727f0c09c"
+
+[update]
+[update.modrinth]
+mod-id = "uCy5P8TZ"
+version = "ZzztWgYn"

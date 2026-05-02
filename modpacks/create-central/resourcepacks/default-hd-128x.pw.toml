@@ -1,0 +1,13 @@
+name = "Default HD 128x"
+filename = "Default HD 128x Demo 1.8.2.4.zip"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/orfTV6nk/versions/4tLImkRg/Default%20HD%20128x%20Demo%201.8.2.4.zip"
+hash-format = "sha512"
+hash = "e7dad648b1d3274f33819015a2af8e9bfd0692503fe7d5509f75e8f152abdeb52a8b77f9123139cf9f251fcdeb127ddc52c5ad6e055d17e8f07682b9d279d33d"
+
+[update]
+[update.modrinth]
+mod-id = "orfTV6nk"
+version = "4tLImkRg"
