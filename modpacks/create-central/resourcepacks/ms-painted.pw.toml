@@ -1,0 +1,13 @@
+name = "MS Painted"
+filename = "MS Painted for 1.21-1.21.11 (v2.45).zip"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/1nLC7eUa/versions/rFUizrXR/MS%20Painted%20for%201.21-1.21.11%20%28v2.45%29.zip"
+hash-format = "sha512"
+hash = "4317bfa08e5d8d7d0fa43dc5c335224fb6630372491624e23cdc248ded2a66406c090975e4cc2e6c11b681f969b88b189fec741e2859ca5055669ce91bd85bad"
+
+[update]
+[update.modrinth]
+mod-id = "1nLC7eUa"
+version = "rFUizrXR"

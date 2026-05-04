@@ -1,0 +1,13 @@
+name = "Avalon 32x"
+filename = "Avalon 32x v1.7.zip"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/bjf0D0qL/versions/GgtS4P0B/Avalon%2032x%20v1.7.zip"
+hash-format = "sha512"
+hash = "cceea00945f72659d6ebe25a4b4124ef5fcf6c19ab55520fc03dc2dedb0a8fef1863a3d05461e27d1439c8a4b89edb511695332c01f050f74cc426778a18af21"
+
+[update]
+[update.modrinth]
+mod-id = "bjf0D0qL"
+version = "GgtS4P0B"

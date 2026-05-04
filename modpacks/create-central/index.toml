@@ -648,6 +648,16 @@ hash = "c76f5edcfb11098965a45cf12de519271252433ab780d47ec3ce07674ae76c1a"
 metafile = true
 
 [[files]]
+file = "resourcepacks/avalon-32x.pw.toml"
+hash = "18f0bd246817479b02006a7af0d119cbde74b7626a0b398ef0c2a19853a9c7ad"
+metafile = true
+
+[[files]]
+file = "resourcepacks/bare-bones.pw.toml"
+hash = "4e07890bec25eadb6a671528dce288e5017f427191b178cb8d6373df192c4d6e"
+metafile = true
+
+[[files]]
 file = "resourcepacks/clayful-512x.pw.toml"
 hash = "dc7573c5c865cda005f192d25b1422adacc07534b0be0ab9307987c792dae161"
 metafile = true
@@ -655,6 +665,11 @@ metafile = true
 [[files]]
 file = "resourcepacks/create-sophisticated-backpacks.pw.toml"
 hash = "4a1765568ea97948d6e8a1871896bff7e980c1b63593866b4cdb330152b713d3"
+metafile = true
+
+[[files]]
+file = "resourcepacks/default-dark-mode.pw.toml"
+hash = "19e48b773677cc0d4a448e7ec5f4d82d7c9bd21063aac3c1bf710b4a78865c53"
 metafile = true
 
 [[files]]
@@ -683,8 +698,23 @@ hash = "f64002469dee1cadc9280a041f4c9df60dcb50422eb5f90fd11ec534f198517f"
 metafile = true
 
 [[files]]
+file = "resourcepacks/ms-painted.pw.toml"
+hash = "237e2ade694a5452ea8db18890a8b6b1219ea155728ffb70c473d155443ef589"
+metafile = true
+
+[[files]]
 file = "resourcepacks/patrix-32x.pw.toml"
 hash = "9b533e4b0f44edd1ee5ffb2540c4d2c8ce618f7433576e250bb6dd64acd23267"
+metafile = true
+
+[[files]]
+file = "resourcepacks/pattern-texture-pack.pw.toml"
+hash = "ff6fa6afb673534294f189e36c156c0399d0961544cc467714373320bdeb2fb6"
+metafile = true
+
+[[files]]
+file = "resourcepacks/steampunk-texture-pack.pw.toml"
+hash = "321bfac62ceab9845d1d6f566c2f8c63695e21b1bf8dc2513326762385b19f9f"
 metafile = true
 
 [[files]]
