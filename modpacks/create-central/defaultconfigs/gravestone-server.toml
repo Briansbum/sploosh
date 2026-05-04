@@ -1,0 +1,7 @@
+spawn_ghost = true
+friendly_ghost = true
+only_owners_can_break = true
+sneak_pickup = true
+remove_obituary = false
+break_pickup = true
+enable_obituary = true

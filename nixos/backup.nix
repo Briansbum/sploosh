@@ -20,9 +20,13 @@ let
       RCON_PORT=25575
 
       # Flush world to disk before snapshotting
-      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §eBacking up — expect a brief lag spike" || true
+      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §eBackup in 10 seconds..." || true
+      sleep 5
+      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §eBackup in 5 seconds..." || true
+      sleep 5
       mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-off" || true
       mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-all flush" || true
+      sleep 2
 
       restic backup "$SVCDIR" \
         --tag "modpack:$SPLOOSH_MODPACK" \
@@ -58,8 +62,13 @@ let
 
       SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
 
+      mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "say §eBackup in 10 seconds..." || true
+      sleep 5
+      mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "say §eBackup in 5 seconds..." || true
+      sleep 5
       mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-off" || true
       mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-all flush" || true
+      sleep 2
 
       restic backup "$SVCDIR" \
         --tag "modpack:$SPLOOSH_MODPACK" \
@@ -146,7 +155,7 @@ in
   # systemd stops it during shutdown which fires ExecStop = the backup script.
   systemd.services.mc-backup-final = {
     description = "Minecraft final backup (shutdown)";
-    after = [ "mc-bootstrap.service" ];
+    after = [ "mc-bootstrap.service" "minecraft-server-create-central.service" ];
     requires = [ "mc-bootstrap.service" ];
     before = [ "shutdown.target" "reboot.target" "halt.target" ];
     wantedBy = [ "multi-user.target" ];

@@ -45,13 +45,13 @@ packwiz refresh
 
 ### Build the mrpack locally
 ```
-nix build .#modpacks.all-the-forge-10.mrpack
+nix build .#<name>-mrpack        # e.g. nix build .#create-central-mrpack
 ls result/
 ```
 
 ### Build the NixOS AMI locally
 ```
-nix build .#amis.all-the-forge-10
+nix build .#amis.<name>          # e.g. nix build .#amis.create-central
 # Requires x86_64-linux and qemu-kvm for the VM build step
 ```
 
@@ -84,11 +84,22 @@ tofu apply -var-file=prod.tfvars
 7. Import mods: `./scripts/import-mods.sh ...`
 8. Push to trigger AMI build + modpack publish CI
 
+## Flake outputs
+
+| Command | What it does |
+|---|---|
+| `nix build .#<name>-mrpack` | Build client .mrpack artifact |
+| `nix build .#<name>-packdir` | Build static pack.toml tree |
+| `nix build .#<name>-modpack` | Resolve + download all mods (server-side) |
+| `nix build .#amis.<name>` | Build NixOS AMI for EC2 |
+| `nix run .#rehash` | Auto-update modpackHash for ALL modpacks |
+
 ## Modpack hash workflow
 
-When you add mods or change the pack, `nix build` will fail with:
+After adding mods or changing the pack, run the rehash shortcut:
 ```
-error: hash mismatch in fixed-output derivation
-  got:    sha256-XXXX...
+nix run .#rehash
 ```
-Copy the `got:` hash into the `modpackHash` field in `modpacks/default.nix`.
+This iterates every modpack in `modpacks/default.nix`, sets a fake hash, triggers a hash-mismatch build, captures the correct `got:` hash, and writes it back automatically.
+
+**Important:** New/untracked files must be staged with `git add` before running `nix run .#rehash` — nix flakes exclude untracked files from the source tree.

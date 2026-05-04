@@ -86,31 +86,38 @@
           '';
         };
 
-        # nix run .#rehash [packname]  — builds with fakeHash, captures the
-        # "got:" hash, and writes it back into modpacks/default.nix.
+        # nix run .#rehash  — for every modpack: builds with fakeHash, captures
+        # the "got:" hash, and writes it back into modpacks/default.nix.
         apps.rehash = {
           type = "app";
           program = toString (pkgs.writeShellApplication {
             name = "rehash";
-            runtimeInputs = [ pkgs.gnused ];
+            runtimeInputs = [ pkgs.gnused pkgs.jq ];
             text = ''
-              PACK=''${1:-create-central}
               NIXFILE="$(git rev-parse --show-toplevel)/modpacks/default.nix"
-
+              PACKS=(${lib.concatStringsSep " " (builtins.attrNames modpackDefs)})
               FAKE="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-              sed -i "s|modpackHash = \"sha256-[^\"]*\";|modpackHash = \"$FAKE\";|" "$NIXFILE"
+              FAILED=0
 
-              echo "Building $PACK to derive correct hash (hash mismatch expected)…"
-              HASH=$(nix build ".#''${PACK}-modpack" --no-link 2>&1 | grep "got:" | awk '{print $NF}' || true)
+              for PACK in "''${PACKS[@]}"; do
+                echo "=== Rehashing $PACK ==="
+                sed -i "/^  $PACK = /,/^  }/ s|modpackHash = \"sha256-[^\"]*\";|modpackHash = \"$FAKE\";|" "$NIXFILE"
 
-              if [ -z "$HASH" ]; then
-                echo "ERROR: could not extract hash — restoring default.nix" >&2
-                git checkout -- "$NIXFILE"
+                HASH=$(nix build ".#''${PACK}-modpack" --no-link 2>&1 | grep "got:" | awk '{print $NF}' || true)
+
+                if [ -z "$HASH" ]; then
+                  echo "ERROR: could not extract hash for $PACK" >&2
+                  FAILED=1
+                else
+                  sed -i "/^  $PACK = /,/^  }/ s|modpackHash = \"$FAKE\";|modpackHash = \"$HASH\";|" "$NIXFILE"
+                  echo "Updated $PACK → $HASH"
+                fi
+              done
+
+              if [ "$FAILED" -ne 0 ]; then
+                echo "One or more packs failed — check output above" >&2
                 exit 1
               fi
-
-              sed -i "s|modpackHash = \"$FAKE\";|modpackHash = \"$HASH\";|" "$NIXFILE"
-              echo "Updated $NIXFILE → $HASH"
             '';
           } + "/bin/rehash");
         };

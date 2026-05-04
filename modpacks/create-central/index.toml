@@ -1,8 +1,16 @@
 hash-format = "sha256"
 
 [[files]]
+file = "config/gravestone-client.toml"
+hash = "caf0fe3575fbd725c925bf3c207d39dce469f5fce376445999c954e6b54f5813"
+
+[[files]]
 file = "defaultconfigs/easier_sleeping-server.toml"
 hash = "45fa406dbd319b5b45a80a9a4ae4ca8dea7af7dfc93b963bfd8d738f0765b840"
+
+[[files]]
+file = "defaultconfigs/gravestone-server.toml"
+hash = "cc20bba66323ec0c3394e30509db3990370024e5814fe258bbef800ad0dafd35"
 
 [[files]]
 file = "mods/almost-unified.pw.toml"
@@ -302,6 +310,11 @@ metafile = true
 [[files]]
 file = "mods/glitchcore.pw.toml"
 hash = "dbd756dd9bb17e6ecebcf2d7052a67a2da1c7dd378bc2089bc154916080fe031"
+metafile = true
+
+[[files]]
+file = "mods/gravestone-mod.pw.toml"
+hash = "2ac1df7fad83d36e69b4aaad32f0b952c9b039d7345592bb66934f40a8606224"
 metafile = true
 
 [[files]]
