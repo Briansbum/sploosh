@@ -311,11 +311,11 @@ resource "aws_launch_template" "mc" {
 
   vpc_security_group_ids = [aws_security_group.minecraft.id]
 
-  # 16 GB root volume — world data lives on S3, not EBS
+  # 17 GB root volume — world data lives on S3, not EBS
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
-      volume_size           = 40
+      volume_size           = 17
       volume_type           = "gp3"
       delete_on_termination = true
     }

@@ -21,19 +21,19 @@ variable "operator_cidr" {
 }
 
 variable "instance_types" {
-  description = "EC2 instance types to pool across in the Fleet (all 32 GiB, spot ~$0.04-0.12/hr in eu-west-2)"
+  description = "EC2 instance types to pool across in the Fleet (all 16 GiB, spot ~$0.02-0.06/hr in eu-west-2)"
   type        = list(string)
   default = [
-    # r-family xlarge: 32 GiB, 4 vCPU — memory-optimised, lowest spot price
-    "r5.xlarge",    # Intel Cascade Lake, large pool
-    "r5a.xlarge",   # AMD EPYC, separate spot pool
-    "r5n.xlarge",   # Intel, higher network bandwidth
-    "r6i.xlarge",   # Intel Ice Lake
-    # m-family 2xlarge: 32 GiB, 8 vCPU — extra CPU for mod-heavy packs
-    "m5.2xlarge",   # Intel, very large pool
-    "m5a.2xlarge",  # AMD, large pool
-    "m6i.2xlarge",  # Intel Ice Lake
-    "m6a.2xlarge",  # AMD EPYC
+    # r-family large: 16 GiB, 2 vCPU — memory-optimised, largest spot pools
+    "r5.large",     # Intel Cascade Lake, very large pool
+    "r5a.large",    # AMD EPYC, separate spot pool
+    "r5n.large",    # Intel, higher network bandwidth
+    "r6i.large",    # Intel Ice Lake
+    # m-family xlarge: 16 GiB, 4 vCPU — extra CPU for mod-heavy packs
+    "m5.xlarge",    # Intel, very large pool
+    "m5a.xlarge",   # AMD, large pool
+    "m6i.xlarge",   # Intel Ice Lake
+    "m6a.xlarge",   # AMD EPYC
   ]
 }
 

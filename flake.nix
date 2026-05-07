@@ -15,6 +15,8 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    packwiz.url = "github:packwiz/packwiz";
   };
 
   outputs =
@@ -24,6 +26,7 @@
       flake-utils,
       nix-minecraft,
       nixos-generators,
+      packwiz,
     }:
     let
       lib = nixpkgs.lib;
@@ -50,8 +53,11 @@
       {
         # nix develop  →  packwiz, wrangler, mcrcon, awscli, tofu, tsx
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            packwiz
+          buildInputs = [
+            (packwiz.packages.${system}.default.override {
+              vendorHash = "sha256-ChUE4hWl+UyPpbzK0GbJTD0AoBCogI7qGstga4+WujI=";
+            })
+          ] ++ (with pkgs; [
             wrangler
             nodejs_22
             mcrcon
@@ -61,7 +67,7 @@
             curl
             jq
             openssl
-          ];
+          ]);
           shellHook = ''
             # npm ci for worker types/build tooling (non-global, stays in worker/)
             if [ -f worker/package.json ] && [ ! -d worker/node_modules ]; then
