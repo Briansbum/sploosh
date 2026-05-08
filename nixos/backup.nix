@@ -28,11 +28,21 @@ let
       mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-all flush" || true
       sleep 2
 
+      # Only snapshot runtime state — world data and bans.
+      # Everything else (mods, config, server jar, libraries) is baked
+      # into the AMI and doesn't need to live in the restic repo.
       restic backup "$SVCDIR" \
         --tag "modpack:$SPLOOSH_MODPACK" \
         --tag "incremental" \
+        --exclude "$SVCDIR/mods" \
+        --exclude "$SVCDIR/config" \
+        --exclude "$SVCDIR/defaultconfigs" \
         --exclude "$SVCDIR/logs" \
-        --exclude "$SVCDIR/crash-reports"
+        --exclude "$SVCDIR/crash-reports" \
+        --exclude "$SVCDIR/libraries" \
+        --exclude "$SVCDIR/versions" \
+        --exclude "$SVCDIR/cache" \
+        --exclude "$SVCDIR/*.jar"
 
       # Re-enable autosave
       mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-on" || true
@@ -73,8 +83,15 @@ let
       restic backup "$SVCDIR" \
         --tag "modpack:$SPLOOSH_MODPACK" \
         --tag "final" \
+        --exclude "$SVCDIR/mods" \
+        --exclude "$SVCDIR/config" \
+        --exclude "$SVCDIR/defaultconfigs" \
         --exclude "$SVCDIR/logs" \
-        --exclude "$SVCDIR/crash-reports"
+        --exclude "$SVCDIR/crash-reports" \
+        --exclude "$SVCDIR/libraries" \
+        --exclude "$SVCDIR/versions" \
+        --exclude "$SVCDIR/cache" \
+        --exclude "$SVCDIR/*.jar"
 
       mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-on" || true
     '';

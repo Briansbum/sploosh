@@ -66,7 +66,13 @@ EOF
           echo "Starting fresh."
         else
           echo "Restoring latest snapshot..."
-          restic restore latest --target / --tag "modpack:$MODPACK"
+          SVCDIR="/srv/minecraft/$MODPACK"
+          restic restore latest \
+            --target / \
+            --tag "modpack:$MODPACK" \
+            --include "$SVCDIR/world*" \
+            --include "$SVCDIR/banned-players.json" \
+            --include "$SVCDIR/banned-ips.json"
         fi
       fi
 
