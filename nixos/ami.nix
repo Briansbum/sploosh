@@ -15,8 +15,10 @@
   # Use GRUB to boot (required for Amazon Linux AMIs)
   boot.loader.grub.device = lib.mkForce "/dev/xvda";
 
-  # EC2 metadata and cloud-init
-  services.cloud-init.enable = true;
+  # cloud-init disabled: mc-bootstrap reads user-data via its own IMDSv2 curl
+  # call, and cloud-init-local was blocking boot for ~4 min retrying IMDS
+  # before the network interface came up.
+  services.cloud-init.enable = false;
 
   # SSM agent (optional but useful for emergency shell without SSH key)
   services.amazon-ssm-agent.enable = true;

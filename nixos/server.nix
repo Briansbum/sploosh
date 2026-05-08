@@ -87,7 +87,7 @@ in
   systemd.services.mc-bootstrap = {
     description = "Minecraft server bootstrap";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" "cloud-init.service" ];
+    after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     before = [ "minecraft-server-create-central.service" ];
     serviceConfig = {
