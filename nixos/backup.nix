@@ -180,7 +180,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "/bin/true";
+      ExecStart = "${pkgs.coreutils}/bin/true";
       ExecStop = "${finalBackupScript}/bin/mc-backup-final";
       TimeoutStopSec = "300";
     };
