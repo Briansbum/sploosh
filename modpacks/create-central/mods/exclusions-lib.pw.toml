@@ -1,0 +1,13 @@
+name = "Exclusions Lib"
+filename = "ExclusionsLib-1.1.0-NEO.jar"
+side = "server"
+
+[download]
+url = "https://cdn.modrinth.com/data/OqRYBfuW/versions/4g8ImxvH/ExclusionsLib-1.1.0-NEO.jar"
+hash-format = "sha512"
+hash = "610ba060a5982690c5c4e735cac6ba7621cefad7c6086f5828a9ba2667a8a1fa62c7c0d7630429c97222447661c3d34c258af2ad29cb0b59677a507e6a521fc6"
+
+[update]
+[update.modrinth]
+mod-id = "OqRYBfuW"
+version = "4g8ImxvH"

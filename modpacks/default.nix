@@ -6,7 +6,7 @@
     displayName = "Create Central";
     mcVersion = "1.21.1";
     loader = "neoforge";
-    modpackHash = "sha256-Ta/UBVBuefwpxITQY+ep5NojBudqBhIzSCAFdg+nKFk=";
+    modpackHash = "sha256-V2HfJmEODmmOW1IORiAv5wACpERFTwUfXO2o/pR+NRQ=";
     jvmOpts = "-Xms4096M -Xmx12288M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200";
   };
 
