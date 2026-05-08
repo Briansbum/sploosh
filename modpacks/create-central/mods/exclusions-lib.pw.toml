@@ -1,6 +1,6 @@
 name = "Exclusions Lib"
 filename = "ExclusionsLib-1.1.0-NEO.jar"
-side = "server"
+side = "both"
 
 [download]
 url = "https://cdn.modrinth.com/data/OqRYBfuW/versions/4g8ImxvH/ExclusionsLib-1.1.0-NEO.jar"
