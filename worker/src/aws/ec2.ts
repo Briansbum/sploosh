@@ -66,8 +66,8 @@ export async function describeFleet(env: Env, fleetId: string): Promise<FleetInf
 }
 
 const INSTANCE_TYPES = [
-  "r5.xlarge", "r5a.xlarge", "r5n.xlarge", "r6i.xlarge",
-  "m5.2xlarge", "m5a.2xlarge", "m6i.2xlarge", "m6a.2xlarge",
+  "r5.large", "r5a.large", "r5n.large", "r6i.large",
+  "m5.xlarge", "m5a.xlarge", "m6i.xlarge", "m6a.xlarge",
 ];
 const AVAILABILITY_ZONES = ["eu-west-2a", "eu-west-2b", "eu-west-2c"];
 
