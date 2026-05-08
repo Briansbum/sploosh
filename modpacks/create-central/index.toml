@@ -33,6 +33,11 @@ hash = "ea336d25c3e21ef168aec20e1ea470c96949ad29632646ee8e8ab0d74b4bbfc9"
 metafile = true
 
 [[files]]
+file = "mods/athena-ctm.pw.toml"
+hash = "ca4fdebf931acb8578216209bcc396cdfe7d804231f8048794eba5104df30f56"
+metafile = true
+
+[[files]]
 file = "mods/balm.pw.toml"
 hash = "9121b274bd87552ae976983d9bdd56061274c126a4a1b7b2e13605b1a1ec0599"
 metafile = true
@@ -60,6 +65,11 @@ metafile = true
 [[files]]
 file = "mods/cb-compressed-blocks.pw.toml"
 hash = "0e401c580a706a6178b6cc968e48c6e858334f35004ddf8ed35f03bb6b1e3ab1"
+metafile = true
+
+[[files]]
+file = "mods/chipped.pw.toml"
+hash = "24c6c3fe917ffbcef04e788dec3e003d0ed03433bc00f9cf4f23fe9b85636aa7"
 metafile = true
 
 [[files]]
@@ -338,8 +348,8 @@ hash = "87309254dc50bcedf00b64fee21a17b19eb4c9307b37ce468c49f57e03ee9079"
 metafile = true
 
 [[files]]
-file = "mods/immersive-sound.pw.toml"
-hash = "10b3e2b80ef6a343b230e27a16d0a5a036140c08d818dd631215c246da431531"
+file = "mods/immersive-melodies.pw.toml"
+hash = "fe534103fe33ec364646a17fd9a597fa7a6003d4a4426a4305477770ce32192f"
 metafile = true
 
 [[files]]
@@ -398,6 +408,16 @@ hash = "1d35574ade0f8a5b9eb808b734b65ff11aa8b7ea70c647547d28e90d1c0bd8f6"
 metafile = true
 
 [[files]]
+file = "mods/lets-do-beachparty.pw.toml"
+hash = "9d60cefdf3351e14d55928e572d4102c87b0e5792198884acaeb6a6ff66abd68"
+metafile = true
+
+[[files]]
+file = "mods/lets-do-herbalbrews.pw.toml"
+hash = "513e9da3100c93614934751c179fbd800f4a409e12a7ba5d44cd09407d211bb0"
+metafile = true
+
+[[files]]
 file = "mods/lets-do-vinery.pw.toml"
 hash = "535e8e9c6bc184e9771cf4e35795c8f162d89abeb5b9aed9c2ea2988c710776f"
 metafile = true
@@ -415,6 +435,11 @@ metafile = true
 [[files]]
 file = "mods/man-of-many-planes.pw.toml"
 hash = "d887c005b64a36e1ab515d2fc6a35531b665ff7f4964b7068a01d3a136925641"
+metafile = true
+
+[[files]]
+file = "mods/moonlight.pw.toml"
+hash = "3b7f0351a2473f8c3f8211539bc3ca1aa065acf90f3e3b5e8b68a433fc6ed21f"
 metafile = true
 
 [[files]]
@@ -440,6 +465,11 @@ metafile = true
 [[files]]
 file = "mods/packwiz-installer-bootstrap.pw.toml"
 hash = "7285038319f871b01122ddbd174072c4fd1a0f95a52f133dc32c168add4f16f6"
+metafile = true
+
+[[files]]
+file = "mods/pastel-mod.pw.toml"
+hash = "bdddda36c259addde0e8c6683f3d90aed915e8d13f9dfe98503388293d353c48"
 metafile = true
 
 [[files]]
@@ -535,6 +565,11 @@ metafile = true
 [[files]]
 file = "mods/supermartijn642s-core-lib.pw.toml"
 hash = "3c08d6331ca871abdfa7a185011d2a6349a1125cc6b2cf87f9c89ca4043dbe70"
+metafile = true
+
+[[files]]
+file = "mods/supplementaries.pw.toml"
+hash = "084ba00d5d41d76f4975935f3ada0fb1fce41bce59dd3901f54684c3588cb9f6"
 metafile = true
 
 [[files]]

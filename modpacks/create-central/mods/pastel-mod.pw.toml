@@ -1,0 +1,13 @@
+name = "Pastel"
+filename = "Pastel-1.1.5.5.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/5lr6fnw0/versions/GGU6zOUH/Pastel-1.1.5.5.jar"
+hash-format = "sha512"
+hash = "75323c5b51ea1aa424596f115ee33301f523d1a4fae73a543e27b36c44ce1a672762ec1a01868de27bcdb735e4fb7cf2cb4b17eac1f1451f7a4151b73440c3c7"
+
+[update]
+[update.modrinth]
+mod-id = "5lr6fnw0"
+version = "GGU6zOUH"
