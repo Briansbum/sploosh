@@ -24,17 +24,17 @@ export async function handleAllowlist(
     return Response.json({ type: 4, data: { content: `Unknown modpack: \`${modpackName}\``, flags: 64 } });
   }
 
-  if (!ip) {
+  if (!ip && !mcUsername) {
     return Response.json({
       type: 4,
       data: {
-        content: `IP is required. Find yours at https://sploosh.workers.dev/whatismyip then run:\n\`/allowlist modpack:${modpackName} ip:<your-ip>\``,
+        content: `Provide at least one of \`ip\` or \`minecraft_username\`.\nFind your IP at https://sploosh.workers.dev/whatismyip`,
         flags: 64,
       },
     });
   }
 
-  if (!isValidIp(ip)) {
+  if (ip && !isValidIp(ip)) {
     return Response.json({ type: 4, data: { content: `\`${ip}\` doesn't look like a valid IP address.`, flags: 64 } });
   }
 
@@ -52,12 +52,17 @@ export async function handleAllowlist(
 
   // Check if already allowlisted with same IP and username
   const existing = await getAllowlistEntry(env, modpackName, userId);
-  if (existing?.ip === ip && (!mcUsername || existing.minecraft_uuid === minecraftUuid)) {
+  const ipUnchanged = !ip || existing?.ip === ip;
+  const uuidUnchanged = !mcUsername || existing?.minecraft_uuid === minecraftUuid;
+  if (existing && ipUnchanged && uuidUnchanged) {
     const expiresIn = Math.round((existing.expires_at - Date.now()) / 1000 / 3600 / 24);
+    const parts = [];
+    if (existing.ip) parts.push(`IP \`${existing.ip}\``);
+    if (existing.minecraft_username) parts.push(`player \`${existing.minecraft_username}\``);
     return Response.json({
       type: 4,
       data: {
-        content: `✅ Your IP \`${ip}\` is already allowlisted for **${modpack.display_name}** (expires in ~${expiresIn}d).`,
+        content: `✅ ${parts.join(" and ")} already allowlisted for **${modpack.display_name}** (expires in ~${expiresIn}d).`,
         flags: 64,
       },
     });
@@ -66,7 +71,7 @@ export async function handleAllowlist(
   const state = await getServerState(env, modpackName);
 
   let sgRuleId = "";
-  if (state?.status === "running" && modpack.security_group_id) {
+  if (ip && state?.status === "running" && modpack.security_group_id) {
     try {
       sgRuleId = await authorizeSgIngress(env, modpack.security_group_id, ip);
     } catch (e) {
@@ -77,7 +82,7 @@ export async function handleAllowlist(
     }
   }
 
-  await upsertAllowlist(env, modpackName, userId, ip, sgRuleId, 7, minecraftUsername, minecraftUuid);
+  await upsertAllowlist(env, modpackName, userId, ip ?? "", sgRuleId, 7, minecraftUsername, minecraftUuid);
 
   const serverLine =
     state?.status === "running" && state.public_ip
@@ -86,15 +91,16 @@ export async function handleAllowlist(
 
   const mcLine = minecraftUsername
     ? `\nMinecraft player: \`${minecraftUsername}\` — will be added to the server whitelist on next start.`
-    : "\n_Tip: run `/allowlist minecraft_username:<your-ign>` to be whitelisted on the server automatically._";
+    : "\n_Tip: include `minecraft_username:<your-ign>` to be whitelisted on the server automatically._";
+
+  const ipLine = ip
+    ? `\`${ip}\` added to the **${modpack.display_name}** allowlist (expires in 7 days).`
+    : `**${modpack.display_name}** — username registered (no IP firewall rule added).`;
 
   return Response.json({
     type: 4,
     data: {
-      content:
-        `✅ Added \`${ip}\` to the **${modpack.display_name}** allowlist (expires in 7 days).` +
-        mcLine +
-        serverLine,
+      content: `✅ ${ipLine}` + mcLine + serverLine,
       flags: 64,
     },
   });
