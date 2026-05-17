@@ -94,7 +94,7 @@ async function doStart(
     await patchReply(
       env,
       token,
-      `🟢 **${displayName}** is starting up!\nConnect: \`${hostname}:25565\`\n(May take 3-5 min for the world to load)`,
+      `🟢 **${displayName}** is starting up!\nConnect: \`${hostname}:25565\`\n(May take 5-8 min — mods download on first boot)`,
     );
   } catch (e) {
     if (fleetId) {
