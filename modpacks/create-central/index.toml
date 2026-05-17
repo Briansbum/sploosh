@@ -638,11 +638,6 @@ hash = "08d4775f8546564ad812b09062633ffc48f44b76328efe3832c021651af86b14"
 metafile = true
 
 [[files]]
-file = "mods/worn-path.pw.toml"
-hash = "1577b8633fe5b34596e0019732ed45f745fc4acaa5fb61ac6e864fc25ea0ae87"
-metafile = true
-
-[[files]]
 file = "mods/xaeros-minimap.pw.toml"
 hash = "d609fad21021c5578750019bbe247515af55b0d1284ef838e42ef4ad0d5fbff4"
 metafile = true
