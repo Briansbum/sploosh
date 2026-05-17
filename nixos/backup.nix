@@ -136,13 +136,6 @@ let
           systemctl poweroff
         fi
 
-        # Also check rebalance recommendation (pre-emptive backup)
-        rebalance=$(imds_get "events/recommendations/rebalance" | jq -r '.noticeTime // ""' 2>/dev/null || echo "")
-        if [ -n "$rebalance" ]; then
-          echo "Rebalance recommendation received, taking backup..."
-          systemctl start mc-backup.service || true
-        fi
-
         sleep 5
       done
     '';
