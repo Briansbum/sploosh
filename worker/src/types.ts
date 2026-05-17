@@ -1,5 +1,6 @@
 export interface Env {
   DB: D1Database;
+  PACK_BUCKET: R2Bucket;
 
   // AWS credentials for EC2 Fleet + SG management
   AWS_ACCESS_KEY_ID: string;

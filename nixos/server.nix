@@ -7,7 +7,8 @@
 #     "rcon_password":    "...",
 #     "s3_bucket":        "sploosh-minecraft-backups",
 #     "s3_prefix":        "create-central/restic",
-#     "restic_password":  "..."
+#     "restic_password":  "...",
+#     "pack_toml_url":    "https://owner.github.io/repo/create-central/pack.toml"
 #   }
 #
 # nix-minecraft substitutes @RCON_PASSWORD@ in server.properties at service
@@ -40,6 +41,7 @@ let
       MODPACK=$(echo         "$USERDATA" | jq -r '.modpack // "default"')
       IDLE_WEBHOOK=$(echo    "$USERDATA" | jq -r '.idle_webhook // ""')
       WEBHOOK_SECRET=$(echo  "$USERDATA" | jq -r '.webhook_secret // ""')
+      PACK_TOML_URL=$(echo   "$USERDATA" | jq -r '.pack_toml_url // ""')
 
       # ── Write env for downstream services (backup, watchdog, nix-minecraft) ─
       # nix-minecraft's ExecStartPre substitutes @VARNAME@ from the environment,
@@ -55,6 +57,7 @@ RESTIC_PASSWORD=$RESTIC_PASS
 SPLOOSH_MODPACK=$MODPACK
 WORKER_IDLE_WEBHOOK=$IDLE_WEBHOOK
 WORKER_WEBHOOK_SECRET=$WEBHOOK_SECRET
+PACK_TOML_URL=$PACK_TOML_URL
 EOF
       chmod 600 /run/minecraft/env
 

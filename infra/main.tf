@@ -290,9 +290,10 @@ resource "aws_security_group" "minecraft" {
 locals {
   modpacks = {
     create-central = {
-      ami_id       = lookup(var.ami_ids, "create-central", "ami-00000000000000000")
-      s3_prefix    = "create-central/restic"
-      display_name = "Create Central"
+      ami_id        = lookup(var.ami_ids, "create-central", "ami-00000000000000000")
+      s3_prefix     = "create-central/restic"
+      display_name  = "Create Central"
+      pack_toml_url = "${var.worker_url}/pack/create-central/pack.toml"
     }
   }
 }
@@ -330,6 +331,7 @@ resource "aws_launch_template" "mc" {
     restic_password  = var.restic_password
     idle_webhook     = var.idle_webhook_url
     webhook_secret   = var.idle_webhook_secret
+    pack_toml_url    = each.value.pack_toml_url
   }))
 
   tag_specifications {

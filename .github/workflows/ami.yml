@@ -5,9 +5,9 @@ on:
     branches: [main]
     paths:
       - "nixos/**"
-      - "modpacks/**"
       - "flake.nix"
       - "flake.lock"
+      - "users.json"
   workflow_dispatch:
     inputs:
       modpack:
