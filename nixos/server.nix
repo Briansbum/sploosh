@@ -33,11 +33,13 @@ let
       USERDATA=$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
         http://169.254.169.254/latest/user-data 2>/dev/null || echo "{}")
 
-      RCON_PASSWORD=$(echo "$USERDATA" | jq -r '.rcon_password // ""')
-      S3_BUCKET=$(echo    "$USERDATA" | jq -r '.s3_bucket // "sploosh-minecraft-backups"')
-      S3_PREFIX=$(echo    "$USERDATA" | jq -r '.s3_prefix // "default/restic"')
-      RESTIC_PASS=$(echo  "$USERDATA" | jq -r '.restic_password // ""')
-      MODPACK=$(echo      "$USERDATA" | jq -r '.modpack // "default"')
+      RCON_PASSWORD=$(echo   "$USERDATA" | jq -r '.rcon_password // ""')
+      S3_BUCKET=$(echo       "$USERDATA" | jq -r '.s3_bucket // "sploosh-minecraft-backups"')
+      S3_PREFIX=$(echo       "$USERDATA" | jq -r '.s3_prefix // "default/restic"')
+      RESTIC_PASS=$(echo     "$USERDATA" | jq -r '.restic_password // ""')
+      MODPACK=$(echo         "$USERDATA" | jq -r '.modpack // "default"')
+      IDLE_WEBHOOK=$(echo    "$USERDATA" | jq -r '.idle_webhook // ""')
+      WEBHOOK_SECRET=$(echo  "$USERDATA" | jq -r '.webhook_secret // ""')
 
       # ── Write env for downstream services (backup, watchdog, nix-minecraft) ─
       # nix-minecraft's ExecStartPre substitutes @VARNAME@ from the environment,
@@ -51,6 +53,8 @@ RCON_PASSWORD=$RCON_PASSWORD
 RESTIC_REPOSITORY=s3:s3.eu-west-2.amazonaws.com/$S3_BUCKET/$S3_PREFIX
 RESTIC_PASSWORD=$RESTIC_PASS
 SPLOOSH_MODPACK=$MODPACK
+WORKER_IDLE_WEBHOOK=$IDLE_WEBHOOK
+WORKER_WEBHOOK_SECRET=$WEBHOOK_SECRET
 EOF
       chmod 600 /run/minecraft/env
 

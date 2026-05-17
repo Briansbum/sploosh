@@ -55,7 +55,7 @@ async function handleIdleShutdown(req: Request, env: Env): Promise<Response> {
     new TextEncoder().encode(env.IDLE_WEBHOOK_SECRET),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["verify"],
+    ["sign"],
   );
   const expected = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(
     JSON.parse(body).modpack ?? ""

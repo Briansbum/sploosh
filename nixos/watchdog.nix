@@ -6,7 +6,7 @@
 let
   watchdogScript = pkgs.writeShellApplication {
     name = "mc-watchdog";
-    runtimeInputs = with pkgs; [ mcrcon curl jq coreutils ];
+    runtimeInputs = with pkgs; [ mcrcon curl jq coreutils openssl gawk ];
     text = ''
       set -euo pipefail
       # shellcheck source=/dev/null

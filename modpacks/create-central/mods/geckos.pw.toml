@@ -1,0 +1,13 @@
+name = "Geckos"
+filename = "geckos-0.0.7.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/pu01XHCl/versions/x7CHMIIh/geckos-0.0.7.jar"
+hash-format = "sha512"
+hash = "d070d52a8f287bb334966e1981c6e31b8f99545028ae4ad17c6e16d3033f3e84eb62fcac472385c18f1b8cb1472c49fad4553c2e6e735af34c5c3deb5ac4c4f0"
+
+[update]
+[update.modrinth]
+mod-id = "pu01XHCl"
+version = "x7CHMIIh"
