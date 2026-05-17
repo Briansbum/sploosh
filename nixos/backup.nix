@@ -1,4 +1,4 @@
-# restic-based backups: incremental every 10 min + final snapshot on shutdown.
+# restic-based backups: incremental every 15 min + final snapshot on shutdown.
 # Also handles spot interruption detection via IMDS.
 { pkgs, lib, ... }:
 
@@ -32,6 +32,7 @@ let
       # Everything else (mods, config, server jar, libraries) is baked
       # into the AMI and doesn't need to live in the restic repo.
       restic backup "$SVCDIR" \
+        --cache-dir /var/cache/restic \
         --tag "modpack:$SPLOOSH_MODPACK" \
         --tag "incremental" \
         --exclude "$SVCDIR/mods" \
@@ -50,6 +51,7 @@ let
 
       # Prune old snapshots (cheap: only runs after backup)
       restic forget \
+        --cache-dir /var/cache/restic \
         --tag "modpack:$SPLOOSH_MODPACK" \
         --keep-hourly 24 \
         --keep-daily 7 \
@@ -81,6 +83,7 @@ let
       sleep 2
 
       restic backup "$SVCDIR" \
+        --cache-dir /var/cache/restic \
         --tag "modpack:$SPLOOSH_MODPACK" \
         --tag "final" \
         --exclude "$SVCDIR/mods" \
@@ -161,7 +164,7 @@ in
   systemd.timers.mc-backup = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnUnitActiveSec = "10m";
+      OnUnitActiveSec = "15m";
       OnBootSec = "15m"; # first backup 15 min after boot
     };
   };
