@@ -7,7 +7,8 @@
 #     "rcon_password":    "...",
 #     "s3_bucket":        "sploosh-minecraft-backups",
 #     "s3_prefix":        "create-central/restic",
-#     "restic_password":  "..."
+#     "restic_password":  "...",
+#     "pack_toml_url":    "https://owner.github.io/repo/create-central/pack.toml"
 #   }
 #
 # nix-minecraft substitutes @RCON_PASSWORD@ in server.properties at service
@@ -40,6 +41,7 @@ let
       MODPACK=$(echo         "$USERDATA" | jq -r '.modpack // "default"')
       IDLE_WEBHOOK=$(echo    "$USERDATA" | jq -r '.idle_webhook // ""')
       WEBHOOK_SECRET=$(echo  "$USERDATA" | jq -r '.webhook_secret // ""')
+      PACK_TOML_URL=$(echo   "$USERDATA" | jq -r '.pack_toml_url // ""')
 
       # ── Write env for downstream services (backup, watchdog, nix-minecraft) ─
       # nix-minecraft's ExecStartPre substitutes @VARNAME@ from the environment,
@@ -55,6 +57,7 @@ RESTIC_PASSWORD=$RESTIC_PASS
 SPLOOSH_MODPACK=$MODPACK
 WORKER_IDLE_WEBHOOK=$IDLE_WEBHOOK
 WORKER_WEBHOOK_SECRET=$WEBHOOK_SECRET
+PACK_TOML_URL=$PACK_TOML_URL
 EOF
       chmod 600 /run/minecraft/env
 
@@ -110,14 +113,11 @@ in
     serviceConfig.EnvironmentFile = "/run/minecraft/env";
   };
 
-  # Companion timer: merges Discord /allowlist players into whitelist.json and
-  # reloads via RCON. Runs every 60s independently of the minecraft-server unit
-  # so new /allowlist entries land in the running JVM without a server restart.
-  # Tolerates RCON being down — failed reloads just wait for the next tick.
+  # Companion timer: merges Discord /allowlist players into whitelist.json every 60s.
   systemd.services.mc-sync-whitelist = let
     syncScript = pkgs.writeShellApplication {
       name = "mc-sync-whitelist";
-      runtimeInputs = [ pkgs.curl pkgs.jq pkgs.mcrcon ];
+      runtimeInputs = [ pkgs.curl pkgs.jq ];
       text = ''
         MODPACK="''${SPLOOSH_MODPACK:-create-central}"
         WHITELIST="/srv/minecraft/$MODPACK/whitelist.json"
@@ -131,11 +131,9 @@ in
 
         MERGED=$(jq -s '.[0] + .[1] | unique_by(.uuid)' "$WHITELIST" <(echo "$DYNAMIC"))
 
-        # Only write + reload if the merge changed the file. Avoids spamming
-        # `whitelist reload` every minute when there are no new entries.
+        # Only write if the merge changed the file.
         if ! diff -q <(echo "$MERGED") "$WHITELIST" >/dev/null 2>&1; then
           echo "$MERGED" > "$WHITELIST"
-          mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist reload" 2>/dev/null || true
         fi
       '';
     };

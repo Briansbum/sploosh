@@ -45,11 +45,21 @@ let
     else
       pkgs.minecraftServers."vanilla-${mcVersionKey}";
 
-  # ── Packwiz modpack (downloads all mods as a fixed-output derivation) ───────
+  # ── Packwiz modpack (for nix build .#<name>-modpack; not used in the AMI) ────
+  # Mods are downloaded at instance boot by mc-install-mods.service so that
+  # mod updates do not require an AMI rebuild.
 
   modpack = pkgs.fetchPackwizModpack {
     url = "file://${packSrc}/pack.toml";
     packHash = modpackHash;
+  };
+
+  # ── packwiz-installer-bootstrap (baked into the AMI) ─────────────────────────
+  # mc-install-mods runs this at boot to pull mods from the Pages pack.toml URL.
+
+  packwizBootstrap = pkgs.fetchurl {
+    url = "https://github.com/packwiz/packwiz-installer-bootstrap/releases/download/v0.0.3/packwiz-installer-bootstrap.jar";
+    hash = "sha256-qPuyTcYEJ46X9GiOgtPZGjGLmO/AjV2/y8vKtkQ9EWw=";
   };
 
   # ── Client artifact ──────────────────────────────────────────────────────────
@@ -125,19 +135,57 @@ let
             motd = displayName;
           };
 
-          # Mods + config are symlinked from the packwiz-resolved store path.
-          symlinks = {
-            "mods" = "${modpack}/mods";
-          };
-          files = lib.optionalAttrs (builtins.pathExists (./. + "/${name}/config")) {
-            "config" = "${modpack}/config";
-          } // lib.optionalAttrs (builtins.pathExists (./. + "/${name}/defaultconfigs")) {
-            "defaultconfigs" = "${modpack}/defaultconfigs";
-          } // {
+          # Mods and config are downloaded at boot by mc-install-mods.service.
+          files = {
             "whitelist.json" = "${whitelistJson}";
             "ops.json" = "${opsJson}";
           };
         };
+      };
+
+      # Download the modpack from GitHub Pages before the Minecraft server starts.
+      systemd.services.mc-install-mods =
+        let
+          installScript = pkgs.writeShellApplication {
+            name = "mc-install-mods";
+            runtimeInputs = [ pkgs.jdk21_headless ];
+            text = ''
+              SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
+              mkdir -p "$SVCDIR"
+              cd "$SVCDIR"
+              for attempt in 1 2 3; do
+                if java -jar ${packwizBootstrap} -g --side server "$PACK_TOML_URL"; then
+                  break
+                fi
+                if [ "$attempt" -eq 3 ]; then
+                  echo "All download attempts failed" >&2
+                  exit 1
+                fi
+                echo "Attempt $attempt failed, retrying in 30s..." >&2
+                sleep 30
+              done
+            '';
+          };
+        in
+        {
+          description = "Download modpack via packwiz-installer";
+          after = [ "mc-bootstrap.service" "network-online.target" ];
+          requires = [ "mc-bootstrap.service" ];
+          wants = [ "network-online.target" ];
+          before = [ "minecraft-server-${name}.service" ];
+          requiredBy = [ "minecraft-server-${name}.service" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            EnvironmentFile = "/run/minecraft/env";
+            ExecStart = "${installScript}/bin/mc-install-mods";
+            TimeoutStartSec = "600";
+          };
+        };
+
+      # Minecraft server must also wait for mods before starting.
+      systemd.services."minecraft-server-${name}" = {
+        after = [ "mc-install-mods.service" ];
       };
     };
 
