@@ -11,6 +11,8 @@ on:
 
 permissions:
   contents: write      # create releases
+  pages: write         # deploy Pages
+  id-token: write      # OIDC for Pages
 
 jobs:
   discover:
@@ -95,32 +97,75 @@ jobs:
           prerelease: true
           make_latest: false
 
-      - name: Upload pack files to R2
-        env:
-          CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
-          CF_WORKER_SECRET: ${{ secrets.CF_WORKER_SECRET }}
+      - name: Build Pages site
         run: |
+          mkdir -p _site
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/modpacks-latest"
           for pack in packdirs/*/; do
             name=$(basename "$pack" | sed 's/^packdir-//')
-            while IFS= read -r file; do
-              rel="${file#$pack}"
-              body_sha256=$(openssl dgst -sha256 "${file}" | awk '{print $2}')
-              hmac=$(printf '%s' "${name}:${rel}:${body_sha256}" | openssl dgst -sha256 -hmac "${CF_WORKER_SECRET}" | awk '{print $2}')
-              curl -sf -X PUT "${CF_WORKER_URL}/admin/pack/${name}/${rel}" \
-                -H "X-Sploosh-Sig: ${hmac}" \
-                --data-binary "@${file}"
-            done < <(find "$pack" -type f)
+            mkdir -p "_site/$name"
+            cp -r "$pack". "_site/$name/"
           done
+          cat > _site/index.html <<HTML
+          <!DOCTYPE html><html><head><meta charset="utf-8">
+          <title>Sploosh Modpacks</title>
+          <style>
+            body{font-family:monospace;max-width:700px;margin:2rem auto;padding:0 1rem}
+            code{background:#f4f4f4;padding:2px 6px;border-radius:3px;word-break:break-all}
+            .steps{margin:0;padding-left:1.4rem;line-height:2}
+            details{margin:1rem 0;border:1px solid #ddd;border-radius:4px;padding:.5rem 1rem}
+            summary{cursor:pointer;font-weight:bold}
+          </style>
+          </head><body>
+          <h1>Sploosh Modpacks</h1>
+          <details open><summary>How to join</summary>
+          <ol class="steps">
+            <li>Download and install <a href="https://prismlauncher.org">Prism Launcher</a></li>
+            <li>Click <b>Add Instance</b> → <b>Import</b> and paste the install link for your pack below</li>
+            <li>Launch the instance once to let it download mods</li>
+            <li>Connect to the server — ask in Discord for the address</li>
+          </ol>
+          <details><summary>Set up auto-updates (recommended)</summary>
+          <ol class="steps">
+            <li>Right-click the instance → <b>Edit</b> → <b>Settings</b> → tick <b>Custom commands</b></li>
+            <li>Set the <b>Pre-launch command</b> to the auto-update command shown for your pack below</li>
+            <li><i>(Optional)</i> Move <code>packwiz-installer-bootstrap.jar</code> from <code>mods/</code> to the <code>.minecraft</code> root to suppress the "not a real mod" warning from NeoForge</li>
+          </ol>
+          </details>
+          </details>
+          HTML
+          for pack in packdirs/*/; do
+            name=$(basename "$pack" | sed 's/^packdir-//')
+            display=$(grep '^name' "_site/$name/pack.toml" | cut -d'"' -f2)
+            mc=$(grep '^minecraft' "_site/$name/pack.toml" | cut -d'"' -f2)
+            cat >> _site/index.html <<HTML
+          <h2>$display</h2>
+          <p>Minecraft $mc</p>
+          <ul class="steps">
+            <li><b>Install link:</b> <code>$RELEASE_URL/$name.mrpack</code></li>
+            <li><b>Pre-launch command:</b> <code>&quot;\$INST_JAVA&quot; -jar &quot;\$INST_MC_DIR/mods/packwiz-installer-bootstrap.jar&quot; $PAGES_URL/$name/pack.toml</code></li>
+          </ul>
+          HTML
+          done
+          echo "</body></html>" >> _site/index.html
+
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+      - uses: actions/deploy-pages@v4
 
       - name: Register pack URLs in D1
         env:
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           CF_WORKER_SECRET: ${{ secrets.CF_WORKER_SECRET }}
         run: |
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/download/modpacks-latest"
           for pack in packdirs/*/; do
             name=$(basename "$pack" | sed 's/^packdir-//')
-            body="{\"mrpack_url\": \"${RELEASE_URL}/${name}.mrpack\", \"pack_toml_url\": \"${CF_WORKER_URL}/pack/${name}/pack.toml\"}"
+            body="{\"mrpack_url\": \"${RELEASE_URL}/${name}.mrpack\", \"pack_toml_url\": \"${PAGES_URL}/${name}/pack.toml\"}"
             hmac=$(echo -n "${name}:${body}" | openssl dgst -sha256 -hmac "${CF_WORKER_SECRET}" | awk '{print $2}')
             curl -sf -X PATCH "${CF_WORKER_URL}/admin/modpacks/${name}" \
               -H "Content-Type: application/json" \

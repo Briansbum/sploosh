@@ -66,9 +66,3 @@ variable "idle_webhook_secret" {
   sensitive   = true
   default     = ""
 }
-
-variable "worker_url" {
-  description = "Cloudflare Worker URL (e.g. https://sploosh.workers.dev)"
-  type        = string
-  default     = "https://sploosh.workers.dev"
-}
