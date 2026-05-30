@@ -75,22 +75,26 @@ async function handlePackUpload(req: Request, env: Env): Promise<Response> {
   const modpack = after.slice(0, slash);
   const filePath = after.slice(slash + 1);
 
+  const bodyBuffer = await req.arrayBuffer();
+  const bodyHashBuf = await crypto.subtle.digest("SHA-256", bodyBuffer);
+  const bodyHash = Array.from(new Uint8Array(bodyHashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
   const sig = req.headers.get("X-Sploosh-Sig") ?? "";
-  const expected = await packHmac(env.ADMIN_SECRET, modpack, filePath);
+  const expected = await packHmac(env.ADMIN_SECRET, modpack, filePath, bodyHash);
   if (sig !== expected) return new Response("unauthorized", { status: 401 });
 
-  await env.PACK_BUCKET.put(`${modpack}/${filePath}`, req.body, {
+  await env.PACK_BUCKET.put(`${modpack}/${filePath}`, bodyBuffer, {
     httpMetadata: { contentType: "text/plain; charset=utf-8" },
   });
   return new Response("ok");
 }
 
-async function packHmac(secret: string, modpack: string, filePath: string): Promise<string> {
+async function packHmac(secret: string, modpack: string, filePath: string, bodyHash: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw", new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
   );
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${modpack}:${filePath}`));
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${modpack}:${filePath}:${bodyHash}`));
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 

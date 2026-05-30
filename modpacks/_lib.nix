@@ -153,7 +153,17 @@ let
               SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
               mkdir -p "$SVCDIR"
               cd "$SVCDIR"
-              java -jar ${packwizBootstrap} -g --side server "$PACK_TOML_URL"
+              for attempt in 1 2 3; do
+                if java -jar ${packwizBootstrap} -g --side server "$PACK_TOML_URL"; then
+                  break
+                fi
+                if [ "$attempt" -eq 3 ]; then
+                  echo "All download attempts failed" >&2
+                  exit 1
+                fi
+                echo "Attempt $attempt failed, retrying in 30s..." >&2
+                sleep 30
+              done
             '';
           };
         in

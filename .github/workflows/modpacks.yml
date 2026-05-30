@@ -104,7 +104,8 @@ jobs:
             name=$(basename "$pack" | sed 's/^packdir-//')
             while IFS= read -r file; do
               rel="${file#$pack}"
-              hmac=$(printf '%s' "${name}:${rel}" | openssl dgst -sha256 -hmac "${CF_WORKER_SECRET}" | awk '{print $2}')
+              body_sha256=$(openssl dgst -sha256 "${file}" | awk '{print $2}')
+              hmac=$(printf '%s' "${name}:${rel}:${body_sha256}" | openssl dgst -sha256 -hmac "${CF_WORKER_SECRET}" | awk '{print $2}')
               curl -sf -X PUT "${CF_WORKER_URL}/admin/pack/${name}/${rel}" \
                 -H "X-Sploosh-Sig: ${hmac}" \
                 --data-binary "@${file}"
