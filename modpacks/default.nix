@@ -7,7 +7,7 @@
     mcVersion = "1.21.1";
     loader = "neoforge";
     modpackHash = "sha256-Bvax9JBOwuDpWT0mXPwEe3JlBxYz4et4kW310d+wHXA=";
-    jvmOpts = "-Xms4096M -Xmx12288M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200";
+    jvmOpts = "-Xms10G -Xmx10G -XX:+UseZGC -XX:+ZGenerational -XX:+AlwaysPreTouch -XX:SoftMaxHeapSize=8g -XX:+UseLargePages -XX:+UseTransparentHugePages";
   };
 
 }

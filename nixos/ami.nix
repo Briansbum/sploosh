@@ -15,6 +15,12 @@
   # Use GRUB to boot (required for Amazon Linux AMIs)
   boot.loader.grub.device = lib.mkForce "/dev/xvda";
 
+  # Pin THP to madvise so the JVM's -XX:+UseTransparentHugePages path works
+  # predictably across kernel updates. madvise = only mmap regions that opt in
+  # (which ZGC does via madvise(MADV_HUGEPAGE)) get 2 MiB pages, avoiding the
+  # global-defrag stalls of transparent_hugepage=always.
+  boot.kernelParams = [ "transparent_hugepage=madvise" ];
+
   # cloud-init disabled: mc-bootstrap reads user-data via its own IMDSv2 curl
   # call, and cloud-init-local was blocking boot for ~4 min retrying IMDS
   # before the network interface came up.
