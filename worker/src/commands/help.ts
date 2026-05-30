@@ -19,8 +19,8 @@ const COMMANDS = `\
 \`/status [modpack]\` — show whether the server is running and the IP (if you're allowlisted)
 \`/start modpack:<name>\` — start the server *(admins only)*
 \`/stop modpack:<name>\` — save & stop the server *(admins only)*
-\`/allowlist modpack:<name> ip:<your-ip>\` — open port 25565 for your IP (7-day TTL); find your IP by searching "what is my ip" on Google
-\`/revoke modpack:<name>\` — remove your IP from the allowlist
+\`/allowlist modpack:<name> ip:<your-ip> minecraft_username:<your-ign>\` — open port 25565 for your IP and add you to the server whitelist; find your IP by searching "what is my ip" on Google
+\`/revoke modpack:<name>\` — remove yourself from the allowlist
 \`/help [modpack]\` — show this help, with install links for a specific pack
 
 **Idle shutdown**

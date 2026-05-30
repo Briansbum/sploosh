@@ -1,13 +1,13 @@
 // Runs every 5 minutes via Cron trigger.
-// 1. Reconcile server_state against EC2 Fleet/DescribeInstances
-// 2. Sweep expired allowlist entries and revoke their SG rules
-import { listModpacks, getServerState, setServerStatus, getExpiredAllowlist, removeAllowlist } from "./db";
+// Reconciles server_state against EC2 Fleet/DescribeInstances. Allowlist
+// entries no longer expire — /revoke is the only way to remove them.
+import { listModpacks, getServerState, setServerStatus } from "./db";
 import { getFleetInstance, describeFleet, revokeSgIngress, authorizeSgIngress } from "./aws/ec2";
 import { setARecord } from "./cloudflare/dns";
 import type { Env } from "./types";
 
 export async function handleScheduled(env: Env): Promise<void> {
-  await Promise.allSettled([reconcileServers(env), sweepAllowlist(env)]);
+  await reconcileServers(env);
 }
 
 async function reconcileServers(env: Env): Promise<void> {
@@ -45,7 +45,7 @@ async function reconcileServers(env: Env): Promise<void> {
         // This handles SG recreation (e.g. after tofu apply) where old rule IDs
         // are gone but D1 still references them.
         const { results } = await env.DB.prepare(
-          "SELECT * FROM allowlist WHERE modpack=?",
+          "SELECT * FROM allowlist WHERE modpack=? AND ip != ''",
         )
           .bind(mp.name)
           .all<{ discord_user_id: string; ip: string; sg_rule_id: string }>();
@@ -84,23 +84,3 @@ async function reconcileServers(env: Env): Promise<void> {
   }
 }
 
-async function sweepAllowlist(env: Env): Promise<void> {
-  const expired = await getExpiredAllowlist(env);
-
-  // Get security group IDs once
-  const { results: modpacks } = await env.DB.prepare(
-    "SELECT name, security_group_id FROM modpacks",
-  ).all<{ name: string; security_group_id: string }>();
-  const sgMap = Object.fromEntries(modpacks.map((m) => [m.name, m.security_group_id]));
-
-  for (const entry of expired) {
-    if (entry.sg_rule_id && sgMap[entry.modpack]) {
-      try {
-        await revokeSgIngress(env, sgMap[entry.modpack], entry.sg_rule_id, entry.ip);
-      } catch {
-        // Already revoked or instance gone — fine
-      }
-    }
-    await removeAllowlist(env, entry.modpack, entry.discord_user_id);
-  }
-}

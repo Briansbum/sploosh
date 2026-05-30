@@ -110,9 +110,10 @@ in
     serviceConfig.EnvironmentFile = "/run/minecraft/env";
   };
 
-  # Companion service: merges Discord /allowlist players into whitelist.json after
-  # the server is up, then reloads via RCON. Runs as a separate unit to avoid
-  # conflicting with nix-minecraft's own ExecStartPost.
+  # Companion timer: merges Discord /allowlist players into whitelist.json and
+  # reloads via RCON. Runs every 60s independently of the minecraft-server unit
+  # so new /allowlist entries land in the running JVM without a server restart.
+  # Tolerates RCON being down — failed reloads just wait for the next tick.
   systemd.services.mc-sync-whitelist = let
     syncScript = pkgs.writeShellApplication {
       name = "mc-sync-whitelist";
@@ -120,31 +121,44 @@ in
       text = ''
         MODPACK="''${SPLOOSH_MODPACK:-create-central}"
         WHITELIST="/srv/minecraft/$MODPACK/whitelist.json"
-        DYNAMIC=$(curl -sf "https://sploosh.workers.dev/api/whitelist/$MODPACK" || echo "[]")
-        if [ -f "$WHITELIST" ]; then
-          MERGED=$(jq -s '.[0] + .[1] | unique_by(.uuid)' "$WHITELIST" <(echo "$DYNAMIC"))
-          echo "$MERGED" > "$WHITELIST"
+        DYNAMIC=$(curl -sf --max-time 10 "https://sploosh.workers.dev/api/whitelist/$MODPACK" || echo "[]")
+
+        if [ ! -f "$WHITELIST" ]; then
+          # Server hasn't been initialised yet (or modpack has no whitelist file);
+          # nothing to merge into. Next tick will retry.
+          exit 0
         fi
-        # Retry until RCON is up (server takes ~10s to be ready)
-        attempts=12
-        while [ "$attempts" -gt 0 ]; do
-          if mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist reload" 2>/dev/null; then
-            break
-          fi
-          attempts=$(( attempts - 1 ))
-          sleep 5
-        done
+
+        MERGED=$(jq -s '.[0] + .[1] | unique_by(.uuid)' "$WHITELIST" <(echo "$DYNAMIC"))
+
+        # Only write + reload if the merge changed the file. Avoids spamming
+        # `whitelist reload` every minute when there are no new entries.
+        if ! diff -q <(echo "$MERGED") "$WHITELIST" >/dev/null 2>&1; then
+          echo "$MERGED" > "$WHITELIST"
+          mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist reload" 2>/dev/null || true
+        fi
       '';
     };
   in {
     description = "Sync Discord allowlist into Minecraft whitelist";
-    after = [ "minecraft-server-create-central.service" ];
-    bindsTo = [ "minecraft-server-create-central.service" ];
-    wantedBy = [ "minecraft-server-create-central.service" ];
+    after = [ "network-online.target" "mc-bootstrap.service" ];
+    wants = [ "network-online.target" ];
+    requires = [ "mc-bootstrap.service" ];
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = "/run/minecraft/env";
       ExecStart = "${syncScript}/bin/mc-sync-whitelist";
+    };
+  };
+
+  systemd.timers.mc-sync-whitelist = {
+    description = "Periodic Discord allowlist → Minecraft whitelist sync";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "30s";
+      OnUnitActiveSec = "60s";
+      AccuracySec = "5s";
+      Unit = "mc-sync-whitelist.service";
     };
   };
 }

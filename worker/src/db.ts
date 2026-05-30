@@ -42,29 +42,32 @@ export async function getAllowlistEntry(
     .first<AllowlistEntry>();
 }
 
+// expires_at is retained in the schema for backward compatibility but no
+// longer enforced; rows live until /revoke removes them.
+const NEVER_EXPIRES = Number.MAX_SAFE_INTEGER;
+
 export async function upsertAllowlist(
   env: Env,
   modpack: string,
   userId: string,
   ip: string,
   sgRuleId: string,
-  ttlDays = 7,
-  minecraftUsername = "",
-  minecraftUuid = "",
+  minecraftUsername: string,
+  minecraftUuid: string,
 ): Promise<void> {
   const now = Date.now();
-  const expires = now + ttlDays * 24 * 60 * 60 * 1000;
   await env.DB.prepare(
     `INSERT INTO allowlist (modpack, discord_user_id, ip, sg_rule_id, added_at, expires_at, minecraft_username, minecraft_uuid)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(modpack, discord_user_id)
-     DO UPDATE SET ip=CASE WHEN excluded.ip != '' THEN excluded.ip ELSE ip END,
-                   sg_rule_id=CASE WHEN excluded.ip != '' THEN excluded.sg_rule_id ELSE sg_rule_id END,
-                   added_at=excluded.added_at, expires_at=excluded.expires_at,
-                   minecraft_username=CASE WHEN excluded.minecraft_username != '' THEN excluded.minecraft_username ELSE minecraft_username END,
-                   minecraft_uuid=CASE WHEN excluded.minecraft_uuid != '' THEN excluded.minecraft_uuid ELSE minecraft_uuid END`,
+     DO UPDATE SET ip=excluded.ip,
+                   sg_rule_id=excluded.sg_rule_id,
+                   added_at=excluded.added_at,
+                   expires_at=excluded.expires_at,
+                   minecraft_username=excluded.minecraft_username,
+                   minecraft_uuid=excluded.minecraft_uuid`,
   )
-    .bind(modpack, userId, ip, sgRuleId, now, expires, minecraftUsername, minecraftUuid)
+    .bind(modpack, userId, ip, sgRuleId, now, NEVER_EXPIRES, minecraftUsername, minecraftUuid)
     .run();
 }
 
@@ -80,13 +83,6 @@ export async function removeAllowlist(
       .run();
   }
   return entry;
-}
-
-export async function getExpiredAllowlist(env: Env): Promise<AllowlistEntry[]> {
-  const r = await env.DB.prepare("SELECT * FROM allowlist WHERE expires_at < ?")
-    .bind(Date.now())
-    .all<AllowlistEntry>();
-  return r.results;
 }
 
 export async function updateModpackFields(env: Env, modpack: string, fields: Record<string, string>): Promise<void> {

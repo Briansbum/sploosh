@@ -40,20 +40,20 @@ const commands = [
   },
   {
     name: "allowlist",
-    description: "Add your IP to the server allowlist (7-day TTL)",
+    description: "Allowlist your IP + Minecraft username for the server",
     options: [
       MODPACK_OPTION,
       {
         name: "ip",
         description: "Your public IP (visit /whatismyip if unsure)",
         type: 3, // STRING
-        required: false,
+        required: true,
       },
       {
         name: "minecraft_username",
         description: "Your Minecraft username (adds you to the server whitelist)",
         type: 3, // STRING
-        required: false,
+        required: true,
       },
     ],
   },
