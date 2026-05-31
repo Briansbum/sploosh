@@ -134,7 +134,6 @@ let
           } // lib.optionalAttrs (builtins.pathExists (./. + "/${name}/defaultconfigs")) {
             "defaultconfigs" = "${packSrc}/defaultconfigs";
           } // {
-            "whitelist.json" = "${whitelistJson}";
             "ops.json" = "${opsJson}";
           };
         };

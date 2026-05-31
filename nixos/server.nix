@@ -141,6 +141,13 @@ EOF
         fi
       fi
 
+      # Seed an empty whitelist if one wasn't restored; mc-sync-whitelist fills it.
+      SVCDIR="/srv/minecraft/$MODPACK"
+      mkdir -p "$SVCDIR"
+      if [ ! -f "$SVCDIR/whitelist.json" ]; then
+        echo "[]" > "$SVCDIR/whitelist.json"
+      fi
+
       echo "Bootstrap complete."
     '';
   };
@@ -194,23 +201,11 @@ in
       runtimeInputs = [ pkgs.curl pkgs.jq pkgs.mcrcon ];
       text = ''
         MODPACK="''${SPLOOSH_MODPACK:-create-central}"
-        WHITELIST="/srv/minecraft/$MODPACK/whitelist.json"
         DYNAMIC=$(curl -sf --max-time 10 "https://sploosh.workers.dev/api/whitelist/$MODPACK" || echo "[]")
 
-        if [ ! -f "$WHITELIST" ]; then
-          # Server hasn't been initialised yet (or modpack has no whitelist file);
-          # nothing to merge into. Next tick will retry.
-          exit 0
-        fi
-
-        MERGED=$(jq -s '.[0] + .[1] | unique_by(.uuid)' "$WHITELIST" <(echo "$DYNAMIC"))
-
-        # Only write + reload if the merge changed the file. Avoids spamming
-        # `whitelist reload` every minute when there are no new entries.
-        if ! diff -q <(echo "$MERGED") "$WHITELIST" >/dev/null 2>&1; then
-          echo "$MERGED" > "$WHITELIST"
-          mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist reload" 2>/dev/null || true
-        fi
+        echo "$DYNAMIC" | jq -r '.[].name' | while IFS= read -r player; do
+          mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist add $player" 2>/dev/null || true
+        done
       '';
     };
   in {
