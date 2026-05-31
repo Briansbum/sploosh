@@ -82,7 +82,7 @@ export async function createFleet(env: Env, launchTemplateId: string): Promise<{
     "OnDemandOptions.AllocationStrategy": "lowestPrice",
     ExcessCapacityTerminationPolicy: "termination",
     "LaunchTemplateConfigs.1.LaunchTemplateSpecification.LaunchTemplateId": launchTemplateId,
-    "LaunchTemplateConfigs.1.LaunchTemplateSpecification.Version": "$Default",
+    "LaunchTemplateConfigs.1.LaunchTemplateSpecification.Version": "$Latest",
   };
 
   let i = 1;
