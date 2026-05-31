@@ -22,6 +22,11 @@ let
   # (PrivateMounts=yes on both services) so restic captures paths as
   # /srv/minecraft/... — matching what mc-bootstrap restores to.
 
+  # mcrcon wrapped with a timeout so a hung server thread (e.g. Sable's
+  # ChunkMap serialisation mixin deadlocking on save-all flush) never blocks
+  # the backup service indefinitely.
+  rconCmd = cmd: "timeout 10 mcrcon ${rconArgs} \"${cmd}\" 2>/dev/null || true";
+
   backupBody = tag: ''
     set -euo pipefail
 
@@ -34,15 +39,19 @@ let
 
     # On any exit (success or error): re-enable autosave, unmount the snapshot
     # from our private namespace, and delete the subvolume if it still exists.
-    # Prevents the server getting stuck in save-off and prevents leaked subvolumes
-    # filling the data volume if restic fails mid-run.
-    trap 'mcrcon ${rconArgs} "save-on" || true; umount /srv/minecraft 2>/dev/null || true; [ -e "$SNAP" ] && btrfs subvolume delete "$SNAP" 2>/dev/null || true' EXIT
+    trap '${rconCmd "save-on"}; umount /srv/minecraft 2>/dev/null || true; [ -e "$SNAP" ] && btrfs subvolume delete "$SNAP" 2>/dev/null || true' EXIT
 
-    # Freeze world writes long enough to snapshot (< 1 s total)
-    mcrcon ${rconArgs} "save-off" || true
-    mcrcon ${rconArgs} "save-all flush" || true
+    # Disable autosave and issue a normal (non-flush) save-all.
+    # save-all flush deadlocks with Sable's ChunkMap serialisation mixin.
+    # Instead: save-all queues all loaded chunks for the IO workers, sleep 2
+    # gives those workers time to drain to page cache, then btrfs filesystem
+    # sync commits the full btrfs transaction (flushing dirty page cache) so
+    # the snapshot captures a complete on-disk state.
+    ${rconCmd "save-off"}
+    ${rconCmd "save-all"}
+    sleep 2
+    btrfs filesystem sync /srv/mc-vol
     btrfs subvolume snapshot -r /srv/mc-vol/live "$SNAP"
-    # save-on is handled by the EXIT trap — fires on both success and error paths
 
     # Shadow /srv/minecraft with the frozen snapshot for this process only.
     # PrivateMounts=yes on the unit keeps this mount private to the service.
