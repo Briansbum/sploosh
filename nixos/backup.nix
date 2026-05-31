@@ -1,53 +1,80 @@
 # restic-based backups: incremental every 15 min + final snapshot on shutdown.
 # Also handles spot interruption detection via IMDS.
+#
+# Backup flow (both incremental and final):
+#   1. save-off     — disables MC autosave timer (near-instant)
+#   2. save-all flush — one blocking flush to get a consistent on-disk state
+#   3. btrfs subvolume snapshot -r /srv/mc-vol/live /srv/mc-vol/snap-<ts>  (atomic, CoW, sub-second)
+#   4. save-on      — server unfrozen; players see ~<1s pause total
+#   5. restic backup against the frozen snapshot (slow, doesn't block server)
+#   6. btrfs subvolume delete the snapshot
+#
+# /srv/mc-vol is the top-level btrfs mount; /srv/minecraft is a bind of /srv/mc-vol/live.
+# Both are set up by mc-data-volume.service before bootstrap runs.
 { pkgs, lib, ... }:
 
 let
-  # ── Incremental backup timer ───────────────────────────────────────────────
+  rconArgs = ''-H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD"'';
+
+  # ── Snapshot + restic backup logic (shared between incremental and final) ──
+  #
+  # The snapshot is mounted at /srv/minecraft inside a private mount namespace
+  # (PrivateMounts=yes on both services) so restic captures paths as
+  # /srv/minecraft/... — matching what mc-bootstrap restores to.
+
+  backupBody = tag: ''
+    set -euo pipefail
+
+    set -a
+    # shellcheck source=/dev/null
+    source /run/minecraft/env
+    set +a
+
+    SNAP="/srv/mc-vol/snap-$(date +%s)"
+
+    # On any exit (success or error): re-enable autosave, unmount the snapshot
+    # from our private namespace, and delete the subvolume if it still exists.
+    # Prevents the server getting stuck in save-off and prevents leaked subvolumes
+    # filling the data volume if restic fails mid-run.
+    trap 'mcrcon ${rconArgs} "save-on" || true; umount /srv/minecraft 2>/dev/null || true; [ -e "$SNAP" ] && btrfs subvolume delete "$SNAP" 2>/dev/null || true' EXIT
+
+    # Freeze world writes long enough to snapshot (< 1 s total)
+    mcrcon ${rconArgs} "save-off" || true
+    mcrcon ${rconArgs} "save-all flush" || true
+    btrfs subvolume snapshot -r /srv/mc-vol/live "$SNAP"
+    # save-on is handled by the EXIT trap — fires on both success and error paths
+
+    # Shadow /srv/minecraft with the frozen snapshot for this process only.
+    # PrivateMounts=yes on the unit keeps this mount private to the service.
+    mount --bind "$SNAP" /srv/minecraft
+
+    restic backup "/srv/minecraft/$SPLOOSH_MODPACK" \
+      --cache-dir /var/cache/restic \
+      --tag "modpack:$SPLOOSH_MODPACK" \
+      --tag "${tag}" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/mods" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/config" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/defaultconfigs" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/logs" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/crash-reports" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/libraries" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/versions" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/cache" \
+      --exclude "/srv/minecraft/$SPLOOSH_MODPACK/*.jar"
+
+    # Explicit cleanup on success path; trap handles the error path.
+    # Must unmount before delete — btrfs refuses to delete a mounted subvolume.
+    umount /srv/minecraft
+    btrfs subvolume delete "$SNAP"
+  '';
+
+  # ── Incremental backup ─────────────────────────────────────────────────────
 
   backupScript = pkgs.writeShellApplication {
     name = "mc-backup";
-    runtimeInputs = with pkgs; [ restic mcrcon jq curl ];
+    runtimeInputs = with pkgs; [ restic mcrcon btrfs-progs util-linux ];
     text = ''
-      set -euo pipefail
-
-      set -a
-      # shellcheck source=/dev/null
-      source /run/minecraft/env
-      set +a
-
-      SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
-      RCON_PORT=25575
-
-      # Flush world to disk before snapshotting
-      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §eBackup in 10 seconds..." || true
-      sleep 5
-      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §eBackup in 5 seconds..." || true
-      sleep 5
-      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-off" || true
-      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-all flush" || true
-      sleep 2
-
-      # Only snapshot runtime state — world data and bans.
-      # Everything else (mods, config, server jar, libraries) is baked
-      # into the AMI and doesn't need to live in the restic repo.
-      restic backup "$SVCDIR" \
-        --cache-dir /var/cache/restic \
-        --tag "modpack:$SPLOOSH_MODPACK" \
-        --tag "incremental" \
-        --exclude "$SVCDIR/mods" \
-        --exclude "$SVCDIR/config" \
-        --exclude "$SVCDIR/defaultconfigs" \
-        --exclude "$SVCDIR/logs" \
-        --exclude "$SVCDIR/crash-reports" \
-        --exclude "$SVCDIR/libraries" \
-        --exclude "$SVCDIR/versions" \
-        --exclude "$SVCDIR/cache" \
-        --exclude "$SVCDIR/*.jar"
-
-      # Re-enable autosave
-      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "save-on" || true
-      mcrcon -H 127.0.0.1 -P "$RCON_PORT" -p "$RCON_PASSWORD" "say §aBackup done" || true
+      ${backupBody "incremental"}
 
       # Prune old snapshots (cheap: only runs after backup)
       restic forget \
@@ -64,40 +91,8 @@ let
 
   finalBackupScript = pkgs.writeShellApplication {
     name = "mc-backup-final";
-    runtimeInputs = with pkgs; [ restic mcrcon ];
-    text = ''
-      set -euo pipefail
-      set -a
-      # shellcheck source=/dev/null
-      source /run/minecraft/env
-      set +a
-
-      SVCDIR="/srv/minecraft/$SPLOOSH_MODPACK"
-
-      mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "say §eBackup in 10 seconds..." || true
-      sleep 5
-      mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "say §eBackup in 5 seconds..." || true
-      sleep 5
-      mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-off" || true
-      mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-all flush" || true
-      sleep 2
-
-      restic backup "$SVCDIR" \
-        --cache-dir /var/cache/restic \
-        --tag "modpack:$SPLOOSH_MODPACK" \
-        --tag "final" \
-        --exclude "$SVCDIR/mods" \
-        --exclude "$SVCDIR/config" \
-        --exclude "$SVCDIR/defaultconfigs" \
-        --exclude "$SVCDIR/logs" \
-        --exclude "$SVCDIR/crash-reports" \
-        --exclude "$SVCDIR/libraries" \
-        --exclude "$SVCDIR/versions" \
-        --exclude "$SVCDIR/cache" \
-        --exclude "$SVCDIR/*.jar"
-
-      mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "save-on" || true
-    '';
+    runtimeInputs = with pkgs; [ restic mcrcon btrfs-progs util-linux ];
+    text = backupBody "final";
   };
 
   # ── Spot interruption handler ──────────────────────────────────────────────
@@ -124,12 +119,11 @@ let
       }
 
       while true; do
-        # Check for spot termination notice
         action=$(imds_get "spot/instance-action" | jq -r '.action // ""' 2>/dev/null || echo "")
 
         if [ "$action" = "terminate" ]; then
           echo "Spot termination notice received, saving..."
-          mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" \
+          mcrcon ${rconArgs} \
             "say §cSpot reclaim in 2 minutes — saving world now" || true
           systemctl start mc-backup-final.service
           sleep 90
@@ -143,14 +137,17 @@ let
 
 in
 {
-  # Incremental backup every 10 minutes while the server is running
+  # Incremental backup every 15 minutes while the server is running.
+  # PrivateMounts=yes: the bind-mount of the snapshot over /srv/minecraft
+  # is private to this unit and doesn't affect the live server.
   systemd.services.mc-backup = {
     description = "Minecraft incremental backup";
-    after = [ "mc-bootstrap.service" ];
+    after = [ "mc-bootstrap.service" "mc-data-volume.service" ];
+    requires = [ "mc-data-volume.service" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = "${backupScript}/bin/mc-backup";
-      # Run as root so it can read the server's data dir
+      PrivateMounts = true;
     };
   };
 
@@ -158,14 +155,11 @@ in
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnUnitActiveSec = "15m";
-      OnBootSec = "15m"; # first backup 15 min after boot
+      OnBootSec = "15m";
     };
   };
 
   # Final backup — runs before system shutdown.
-  # Pattern: RemainAfterExit=yes with ExecStop is the reliable way to hook
-  # into systemd shutdown. ExecStart=/bin/true activates the unit at boot;
-  # systemd stops it during shutdown which fires ExecStop = the backup script.
   systemd.services.mc-backup-final = {
     description = "Minecraft final backup (shutdown)";
     after = [ "mc-bootstrap.service" "minecraft-server-create-central.service" ];
@@ -179,6 +173,7 @@ in
       ExecStart = "${pkgs.coreutils}/bin/true";
       ExecStop = "${finalBackupScript}/bin/mc-backup-final";
       TimeoutStopSec = "300";
+      PrivateMounts = true;
     };
   };
 

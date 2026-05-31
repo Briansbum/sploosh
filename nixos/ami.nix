@@ -15,6 +15,9 @@
   # Use GRUB to boot (required for Amazon Linux AMIs)
   boot.loader.grub.device = lib.mkForce "/dev/xvda";
 
+  # btrfs is required for the data volume (/srv/minecraft via mc-data-volume.service)
+  boot.supportedFilesystems = [ "btrfs" ];
+
   # Pin THP to madvise so the JVM's -XX:+UseTransparentHugePages path works
   # predictably across kernel updates. madvise = only mmap regions that opt in
   # (which ZGC does via madvise(MADV_HUGEPAGE)) get 2 MiB pages, avoiding the
@@ -49,6 +52,7 @@
     awscli2
     jq
     curl
+    btrfs-progs
   ];
 
   # Passwordless sudo for the default ec2-user / ubuntu user

@@ -311,11 +311,23 @@ resource "aws_launch_template" "mc" {
 
   vpc_security_group_ids = [aws_security_group.minecraft.id]
 
-  # 17 GB root volume — world data lives on S3, not EBS
+  # 17 GB root volume — system + mods + JVM (no world data)
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
       volume_size           = 17
+      volume_type           = "gp3"
+      delete_on_termination = true
+    }
+  }
+
+  # 20 GB data volume — btrfs, holds /srv/minecraft. Snapshots happen here
+  # so restic can run against a frozen subvolume instead of the live world.
+  # Formatted on first boot by mc-data-volume.service (label sploosh-data).
+  block_device_mappings {
+    device_name = "/dev/xvdb"
+    ebs {
+      volume_size           = 20
       volume_type           = "gp3"
       delete_on_termination = true
     }

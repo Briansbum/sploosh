@@ -15,6 +15,67 @@
 { pkgs, lib, ... }:
 
 let
+  # Format + mount the data EBS volume that holds /srv/minecraft.
+  #
+  # Layout:
+  #   /srv/mc-vol            — top of btrfs filesystem (admin / snapshot access)
+  #   /srv/mc-vol/live       — subvolume holding actual world data
+  #   /srv/minecraft         — bind-mount of /srv/mc-vol/live (what services see)
+  #
+  # All Nitro instance types in the fleet expose EBS as NVMe, so the AWS
+  # device_name hint (xvdb) doesn't match the kernel name. We identify the
+  # data volume by filesystem label after first-boot mkfs.
+  dataVolumeScript = pkgs.writeShellApplication {
+    name = "mc-data-volume";
+    runtimeInputs = with pkgs; [ btrfs-progs util-linux ];
+    text = ''
+      set -euo pipefail
+
+      LABEL="sploosh-data"
+
+      if [ ! -e "/dev/disk/by-label/$LABEL" ]; then
+        # First boot: find a candidate block device. Heuristic: a whole disk
+        # that isn't the root and has no existing filesystem signature.
+        ROOT_SRC=$(findmnt -no SOURCE /)
+        ROOT_DISK=$(lsblk -no PKNAME "$ROOT_SRC")
+
+        CANDIDATE=""
+        for dev in $(lsblk -dnpo NAME,TYPE | awk '$2=="disk"{print $1}'); do
+          [ "$(basename "$dev")" = "$ROOT_DISK" ] && continue
+          if blkid -p "$dev" >/dev/null 2>&1; then
+            echo "Skipping $dev — already has a filesystem signature" >&2
+            continue
+          fi
+          CANDIDATE="$dev"
+          break
+        done
+
+        if [ -z "$CANDIDATE" ]; then
+          echo "No empty data volume found — refusing to continue" >&2
+          exit 1
+        fi
+
+        echo "Formatting $CANDIDATE as btrfs (label=$LABEL)"
+        mkfs.btrfs -L "$LABEL" "$CANDIDATE"
+        udevadm settle
+      fi
+
+      mkdir -p /srv/mc-vol
+      if ! mountpoint -q /srv/mc-vol; then
+        mount -t btrfs -o noatime,compress=zstd "LABEL=$LABEL" /srv/mc-vol
+      fi
+
+      if [ ! -d /srv/mc-vol/live ]; then
+        btrfs subvolume create /srv/mc-vol/live
+      fi
+
+      mkdir -p /srv/minecraft
+      if ! mountpoint -q /srv/minecraft; then
+        mount --bind /srv/mc-vol/live /srv/minecraft
+      fi
+    '';
+  };
+
   bootstrapScript = pkgs.writeShellApplication {
     name = "mc-bootstrap";
     runtimeInputs = with pkgs; [
@@ -86,13 +147,26 @@ EOF
 
 in
 {
+  # Format + mount the data EBS volume before anything else touches /srv/minecraft.
+  systemd.services.mc-data-volume = {
+    description = "Mount btrfs data volume at /srv/minecraft";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "mc-bootstrap.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${dataVolumeScript}/bin/mc-data-volume";
+    };
+  };
+
   # Run bootstrap before any minecraft service starts.
   # Must run after network is up so IMDS is reachable.
   systemd.services.mc-bootstrap = {
     description = "Minecraft server bootstrap";
     wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
+    after = [ "network-online.target" "mc-data-volume.service" ];
     wants = [ "network-online.target" ];
+    requires = [ "mc-data-volume.service" ];
     before = [ "minecraft-server-create-central.service" ];
     serviceConfig = {
       Type = "oneshot";
