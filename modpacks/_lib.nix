@@ -130,9 +130,9 @@ let
             "mods" = "${modpack}/mods";
           };
           files = lib.optionalAttrs (builtins.pathExists (./. + "/${name}/config")) {
-            "config" = "${modpack}/config";
+            "config" = "${packSrc}/config";
           } // lib.optionalAttrs (builtins.pathExists (./. + "/${name}/defaultconfigs")) {
-            "defaultconfigs" = "${modpack}/defaultconfigs";
+            "defaultconfigs" = "${packSrc}/defaultconfigs";
           } // {
             "whitelist.json" = "${whitelistJson}";
             "ops.json" = "${opsJson}";

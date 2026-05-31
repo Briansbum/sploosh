@@ -283,6 +283,10 @@ resource "aws_security_group" "minecraft" {
   }
 
   tags = { Name = "sploosh-minecraft" }
+
+  lifecycle {
+    ignore_changes = [ingress, egress]
+  }
 }
 
 # ── Launch Templates ───────────────────────────────────────────────────────────
