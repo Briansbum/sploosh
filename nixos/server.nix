@@ -27,7 +27,7 @@ let
   # data volume by filesystem label after first-boot mkfs.
   dataVolumeScript = pkgs.writeShellApplication {
     name = "mc-data-volume";
-    runtimeInputs = with pkgs; [ btrfs-progs util-linux ];
+    runtimeInputs = with pkgs; [ btrfs-progs util-linux gawk ];
     text = ''
       set -euo pipefail
 
