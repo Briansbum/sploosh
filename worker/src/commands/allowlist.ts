@@ -19,7 +19,7 @@ export async function handleAllowlist(
     return Response.json({
       type: 4,
       data: {
-        content: "Usage: `/allowlist modpack:<name> ip:<your-ip> minecraft_username:<your-ign>` — both `ip` and `minecraft_username` are required.\nFind your IP at https://sploosh.workers.dev/whatismyip",
+        content: "Usage: `/allowlist modpack:<name> ip:<your-ip> minecraft_username:<your-ign>` — both `ip` and `minecraft_username` are required.\nFind your IP at https://sploosh.freestone-alex.workers.dev/whatismyip",
         flags: 64,
       },
     });

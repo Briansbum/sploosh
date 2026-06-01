@@ -201,7 +201,7 @@ in
       runtimeInputs = [ pkgs.curl pkgs.jq pkgs.mcrcon ];
       text = ''
         MODPACK="''${SPLOOSH_MODPACK:-create-central}"
-        DYNAMIC=$(curl -sf --max-time 10 "https://sploosh.workers.dev/api/whitelist/$MODPACK" || echo "[]")
+        DYNAMIC=$(curl -sf --max-time 10 "https://sploosh.freestone-alex.workers.dev/api/whitelist/$MODPACK" || echo "[]")
 
         echo "$DYNAMIC" | jq -r '.[].name' | while IFS= read -r player; do
           mcrcon -H 127.0.0.1 -P 25575 -p "$RCON_PASSWORD" "whitelist add $player" 2>/dev/null || true
