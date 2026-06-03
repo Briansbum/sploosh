@@ -1,13 +1,23 @@
 # restic-based backups: incremental every 15 min + final snapshot on shutdown.
 # Also handles spot interruption detection via IMDS.
 #
-# Backup flow (both incremental and final):
+# Incremental backup flow:
 #   1. save-off     — disables MC autosave timer (near-instant)
-#   2. save-all flush — one blocking flush to get a consistent on-disk state
-#   3. btrfs subvolume snapshot -r /srv/mc-vol/live /srv/mc-vol/snap-<ts>  (atomic, CoW, sub-second)
-#   4. save-on      — server unfrozen; players see ~<1s pause total
-#   5. restic backup against the frozen snapshot (slow, doesn't block server)
-#   6. btrfs subvolume delete the snapshot
+#   2. save-all     — queues all loaded chunks for IO workers
+#   3. sleep 2      — lets IO workers drain to page cache
+#   4. btrfs filesystem sync — flushes dirty page cache → complete on-disk state
+#   5. btrfs subvolume snapshot -r /srv/mc-vol/live /srv/mc-vol/snap-<ts>
+#   6. save-on      — server unfrozen; players see ~<1s pause total
+#   7. restic backup against the frozen snapshot (slow, doesn't block server)
+#   8. btrfs subvolume delete the snapshot
+#
+# Final backup flow (clean shutdown / spot reclaim):
+#   1. warn players via RCON
+#   2. systemctl stop minecraft-server-create-central — JVM shutdown hooks flush
+#      everything to disk, including Create contraptions
+#   3. btrfs filesystem sync + snapshot
+#   4. restic backup against the frozen snapshot
+#   5. btrfs subvolume delete the snapshot
 #
 # /srv/mc-vol is the top-level btrfs mount; /srv/minecraft is a bind of /srv/mc-vol/live.
 # Both are set up by mc-data-volume.service before bootstrap runs.
@@ -97,11 +107,54 @@ let
   };
 
   # ── Final backup (clean shutdown / spot reclaim) ───────────────────────────
+  #
+  # Stops the server cleanly instead of using save-all + sleep, so that JVM
+  # shutdown hooks flush everything — including Create contraptions — before
+  # we snapshot. The incremental path cannot do this (players would disconnect),
+  # but the final path runs only when the server is idle or reclaimed.
 
   finalBackupScript = pkgs.writeShellApplication {
     name = "mc-backup-final";
     runtimeInputs = with pkgs; [ restic mcrcon btrfs-progs util-linux ];
-    text = backupBody "final";
+    text = ''
+      set -euo pipefail
+
+      set -a
+      # shellcheck source=/dev/null
+      source /run/minecraft/env
+      set +a
+
+      SNAP="/srv/mc-vol/snap-$(date +%s)"
+
+      trap 'umount /srv/minecraft 2>/dev/null || true; [ -e "$SNAP" ] && btrfs subvolume delete "$SNAP" 2>/dev/null || true' EXIT
+
+      # Warn players, then stop the server so JVM shutdown hooks flush
+      # all pending data (including Create contraptions) before snapshotting.
+      ${rconCmd "say §eServer shutting down — saving world..."}
+      systemctl stop minecraft-server-create-central.service || true
+
+      btrfs filesystem sync /srv/mc-vol
+      btrfs subvolume snapshot -r /srv/mc-vol/live "$SNAP"
+
+      mount --bind "$SNAP" /srv/minecraft
+
+      restic backup "/srv/minecraft/$SPLOOSH_MODPACK" \
+        --cache-dir /var/cache/restic \
+        --tag "modpack:$SPLOOSH_MODPACK" \
+        --tag "final" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/mods" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/config" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/defaultconfigs" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/logs" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/crash-reports" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/libraries" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/versions" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/cache" \
+        --exclude "/srv/minecraft/$SPLOOSH_MODPACK/*.jar"
+
+      umount /srv/minecraft
+      btrfs subvolume delete "$SNAP"
+    '';
   };
 
   # ── Spot interruption handler ──────────────────────────────────────────────
@@ -181,7 +234,7 @@ in
       RemainAfterExit = true;
       ExecStart = "${pkgs.coreutils}/bin/true";
       ExecStop = "${finalBackupScript}/bin/mc-backup-final";
-      TimeoutStopSec = "300";
+      TimeoutStopSec = "600";
       PrivateMounts = true;
     };
   };
