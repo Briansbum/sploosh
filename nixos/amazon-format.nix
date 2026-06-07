@@ -1,7 +1,8 @@
 # Custom amazon nixos-generators format module.
-# Identical to the stock amazon format but sets memSize = 4096 for the QEMU
-# build VM.  The nixpkgs default of 1 GiB is not enough for our modpack
-# closure and causes a virtiofsd crash early in VM boot on GitHub Actions.
+# Sets memSize = 4096 for the QEMU build VM (nixpkgs default of 1 GiB is not
+# enough and causes virtiofsd crashes on GitHub Actions), and diskSize = "auto"
+# so make-disk-image.nix sizes the image to fit the actual closure rather than
+# using the 4 GiB virtualisation.diskSize default (which is too small).
 { config, pkgs, lib, modulesPath, ... }:
 let
   inherit (lib) optionalString escapeShellArg;
@@ -29,7 +30,7 @@ in {
       name = config.image.baseName;
       fsType = "ext4";
       partitionTableType = if config.ec2.efi then "efi" else "legacy+gpt";
-      inherit (config.virtualisation) diskSize;
+      diskSize = "auto";
       memSize = 4096;
       postVM = ''
         mkdir -p $out/nix-support
