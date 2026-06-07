@@ -157,7 +157,8 @@
         in
         nixos-generators.nixosGenerate {
           system = "x86_64-linux";
-          format = "amazon";
+          format = "amazon-hm";
+          customFormats = { "amazon-hm" = ./nixos/amazon-format.nix; };
           modules = [
             ./nixos/ami.nix
             mp.nixosModule
