@@ -74,8 +74,22 @@ jobs:
 
       - name: Build NixOS AMI
         run: |
-          nix build .#amis.${{ matrix.modpack }} -o result-ami
+          if ! nix build .#amis.${{ matrix.modpack }} -o result-ami 2>build-stderr.txt; then
+            cat build-stderr.txt
+            mkdir -p nix-logs
+            grep -oP "(?<=run 'nix log )/nix/store/[^\']+" build-stderr.txt | sort -u | while read -r drv; do
+              nix log "$drv" > "nix-logs/$(basename "$drv").txt" 2>&1 || true
+            done
+            exit 1
+          fi
           echo "NIX_RESULT=$(readlink -f result-ami)" >> "$GITHUB_ENV"
+
+      - name: Upload Nix build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nix-logs-${{ matrix.modpack }}
+          path: nix-logs/
 
       - name: Register AMI
         env:
