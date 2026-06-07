@@ -126,6 +126,11 @@ hash = "4826787724dabb396681358d97bce2e5649a4fbad2f210588231d8e7293740e8"
 metafile = true
 
 [[files]]
+file = "mods/create-aeronautics-throwable-rope-connector.pw.toml"
+hash = "89cd69bc05b2924ce052b375651e5f989ec78b038f4baaff1d2b5c3e95ac0455"
+metafile = true
+
+[[files]]
 file = "mods/create-aeronautics.pw.toml"
 hash = "6ea6284b569b13f45bfe44f9790389de4a2f7cda92c8b3bb94511b600d64c486"
 metafile = true
