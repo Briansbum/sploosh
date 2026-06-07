@@ -5,6 +5,14 @@ file = "config/gravestone-client.toml"
 hash = "caf0fe3575fbd725c925bf3c207d39dce469f5fce376445999c954e6b54f5813"
 
 [[files]]
+file = "config/servercore/config.yml"
+hash = "7f5f70d200fbccd8ac6bcec57e874d90ba61186c12349030513f7f8ced45d45c"
+
+[[files]]
+file = "config/servercore/optimizations.yml"
+hash = "63ba7034fdf1f45f1b40798d3212f8d838f7c299fbe5795075fbafe1e2265192"
+
+[[files]]
 file = "defaultconfigs/easier_sleeping-server.toml"
 hash = "45fa406dbd319b5b45a80a9a4ae4ca8dea7af7dfc93b963bfd8d738f0765b840"
 
@@ -58,6 +66,11 @@ hash = "9b1610cd28c49d34ce2fd760d208fb569f0e20055fee4c81ed4da6489b340312"
 metafile = true
 
 [[files]]
+file = "mods/blocks-bogies.pw.toml"
+hash = "feb4efaaeaa4ee270d04de7f06e377ada25e3977649c7d6de227ea6338396634"
+metafile = true
+
+[[files]]
 file = "mods/boat-item-view.pw.toml"
 hash = "ba58df8c82fc920a316a3ad2f8d52e985e34cd09713487ccbb5ea778b6168c2d"
 metafile = true
@@ -105,6 +118,11 @@ metafile = true
 [[files]]
 file = "mods/copycats.pw.toml"
 hash = "e002fab16a9b9ef0a35844030339612a38d3c58b0b93e97a34eb43ddc9108be7"
+metafile = true
+
+[[files]]
+file = "mods/create-aeronautics-climbable-rope.pw.toml"
+hash = "4826787724dabb396681358d97bce2e5649a4fbad2f210588231d8e7293740e8"
 metafile = true
 
 [[files]]
@@ -203,6 +221,11 @@ hash = "fe642f391d1da67b5308987fb8ed3f4e1914d92bb181d8c05c6f5635e886b635"
 metafile = true
 
 [[files]]
+file = "mods/create-more-wrenchables.pw.toml"
+hash = "5e3456a4e59542b419b0393fe4f86c0d544698c26750bd8f44113d7a5ffa3e4b"
+metafile = true
+
+[[files]]
 file = "mods/create-ore-excavation.pw.toml"
 hash = "10d3389f72e8e8f78518f5b6786ccec4e62dbad117491d2970e8e1f75e390251"
 metafile = true
@@ -248,8 +271,18 @@ hash = "cc05bcaec0e857c6a6f7de4bd09a22ad195b5b77a25e4adfe737915ac3be68db"
 metafile = true
 
 [[files]]
+file = "mods/create-train-parts.pw.toml"
+hash = "c6abf0b9e9455e965b3a5a8b0e02e69da749fe39ba3ca35c32bd72fecdfb6e32"
+metafile = true
+
+[[files]]
 file = "mods/create-waystones-recipes.pw.toml"
 hash = "556a6d6bbc2a5d1449fdbc09cef6ab7c776377cbe4b5fc7f47f885557f6522ec"
+metafile = true
+
+[[files]]
+file = "mods/create-wrencheable-planes.pw.toml"
+hash = "09873935b2caa08067433091f388691b811d44536970fe70b500a8203af308d9"
 metafile = true
 
 [[files]]
@@ -580,6 +613,16 @@ metafile = true
 [[files]]
 file = "mods/ping-wheel.pw.toml"
 hash = "650330109d21831664d2ff597c7a90200eda69a1efaca4e9b0b6b6297ac3c364"
+metafile = true
+
+[[files]]
+file = "mods/playeranimator.pw.toml"
+hash = "93284ca7f2f23f0bb76d42b797cabf2aea1914ee9825bec82bf6ffe4c60dda0d"
+metafile = true
+
+[[files]]
+file = "mods/pretty-in-pink.pw.toml"
+hash = "47563beaf6073dabfb48c0acb465afd119b663b39fc4ad7e148079f4bfe1082a"
 metafile = true
 
 [[files]]
