@@ -47,13 +47,13 @@ const commands = [
         name: "ip",
         description: "Your public IP (visit /whatismyip if unsure)",
         type: 3, // STRING
-        required: true,
+        required: false,
       },
       {
         name: "minecraft_username",
         description: "Your Minecraft username (adds you to the server whitelist)",
         type: 3, // STRING
-        required: true,
+        required: false,
       },
     ],
   },

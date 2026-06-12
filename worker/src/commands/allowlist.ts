@@ -1,5 +1,5 @@
 import { getModpack, getServerState, upsertAllowlist, getAllowlistEntry } from "../db";
-import { authorizeSgIngress } from "../aws/ec2";
+import { authorizeSgIngress, revokeSgIngress } from "../aws/ec2";
 import type { Env } from "../types";
 
 export async function handleAllowlist(
@@ -15,11 +15,14 @@ export async function handleAllowlist(
   const ip = options?.find((o) => o.name === "ip")?.value as string | undefined;
   const mcUsername = options?.find((o) => o.name === "minecraft_username")?.value as string | undefined;
 
-  if (!modpackName || !ip || !mcUsername) {
+  if (!modpackName || (!ip && !mcUsername)) {
     return Response.json({
       type: 4,
       data: {
-        content: "Usage: `/allowlist modpack:<name> ip:<your-ip> minecraft_username:<your-ign>` — both `ip` and `minecraft_username` are required.\nFind your IP at https://sploosh.freestone-alex.workers.dev/whatismyip",
+        content:
+          "Usage: `/allowlist modpack:<name> [ip:<your-ip>] [minecraft_username:<ign>]`\n" +
+          "At least one of `ip` or `minecraft_username` is required. You can run the command twice to set each separately.\n" +
+          "Find your IP at https://sploosh.freestone-alex.workers.dev/whatismyip",
         flags: 64,
       },
     });
@@ -30,72 +33,110 @@ export async function handleAllowlist(
     return Response.json({ type: 4, data: { content: `Unknown modpack: \`${modpackName}\``, flags: 64 } });
   }
 
-  if (!isValidIp(ip)) {
+  if (ip && !isValidIp(ip)) {
     return Response.json({ type: 4, data: { content: `\`${ip}\` doesn't look like a valid IP address.`, flags: 64 } });
   }
 
-  const mcLookup = await lookupMinecraftUuid(mcUsername);
-  if (!mcLookup) {
-    return Response.json({ type: 4, data: { content: `Minecraft player \`${mcUsername}\` not found.`, flags: 64 } });
-  }
-  const minecraftUsername = mcLookup.name;
-  const minecraftUuid = mcLookup.uuid;
-
-  const existing = await getAllowlistEntry(env, modpackName, userId);
-  if (existing && existing.ip === ip && existing.minecraft_uuid === minecraftUuid) {
-    return Response.json({
-      type: 4,
-      data: {
-        content: `✅ IP \`${existing.ip}\` and player \`${existing.minecraft_username}\` already allowlisted for **${modpack.display_name}**.`,
-        flags: 64,
-      },
-    });
-  }
-
-  const state = await getServerState(env, modpackName);
-
-  let sgRuleId = "";
-  if (state?.status === "running" && modpack.security_group_id) {
-    try {
-      sgRuleId = await authorizeSgIngress(env, modpack.security_group_id, ip);
-    } catch (e) {
-      return Response.json({
-        type: 4,
-        data: { content: `Failed to add SG rule: ${String(e)}`, flags: 64 },
-      });
+  // Attempt MC UUID resolution; surface errors rather than silently failing
+  let mcResolved: { name: string; uuid: string } | null = null;
+  let mcError: string | null = null;
+  if (mcUsername) {
+    const result = await lookupMinecraftUuid(mcUsername);
+    if (result.data) {
+      mcResolved = result.data;
+    } else {
+      mcError = result.error;
+      if (!ip) {
+        return Response.json({
+          type: 4,
+          data: {
+            content: `Couldn't resolve Minecraft player \`${mcUsername}\`: ${mcError}\nYou can still add your IP now with \`/allowlist modpack:${modpackName} ip:<your-ip>\` and retry the username later.`,
+            flags: 64,
+          },
+        });
+      }
     }
   }
 
-  await upsertAllowlist(env, modpackName, userId, ip, sgRuleId, minecraftUsername, minecraftUuid);
+  const [existing, state] = await Promise.all([
+    getAllowlistEntry(env, modpackName, userId),
+    getServerState(env, modpackName),
+  ]);
 
-  const serverLine =
-    state?.status === "running" && state.public_ip
-      ? `\nConnect now: \`${state.public_ip}:25565\` (whitelist syncs within ~60s)`
-      : "\nStart the server with `/start modpack:" + modpackName + "`.";
+  // Merge new values over existing; keep existing fields when not being updated
+  const finalIp = ip ?? existing?.ip ?? "";
+  const finalMcUsername = mcResolved?.name ?? existing?.minecraft_username ?? "";
+  const finalMcUuid = mcResolved?.uuid ?? existing?.minecraft_uuid ?? "";
+
+  // Manage SG rule only when IP is changing
+  let sgRuleId = existing?.sg_rule_id ?? "";
+  if (ip && ip !== existing?.ip) {
+    if (existing?.sg_rule_id && modpack.security_group_id) {
+      try {
+        await revokeSgIngress(env, modpack.security_group_id, existing.sg_rule_id, existing.ip);
+      } catch { /* not fatal — rule may already be gone */ }
+    }
+    sgRuleId = "";
+    if (state?.status === "running" && modpack.security_group_id) {
+      try {
+        sgRuleId = await authorizeSgIngress(env, modpack.security_group_id, ip);
+      } catch (e) {
+        return Response.json({
+          type: 4,
+          data: { content: `Failed to add SG rule: ${String(e)}`, flags: 64 },
+        });
+      }
+    }
+  }
+
+  await upsertAllowlist(env, modpackName, userId, finalIp, sgRuleId, finalMcUsername, finalMcUuid);
+
+  // Report back current stored state
+  const ipLine = finalIp ? `IP: \`${finalIp}\`` : "IP: *(not set — run `/allowlist modpack:" + modpackName + " ip:<your-ip>`)*";
+  const mcLine = finalMcUsername
+    ? `Minecraft: \`${finalMcUsername}\``
+    : "Minecraft: *(not set — run `/allowlist modpack:" + modpackName + " minecraft_username:<ign>`)*";
+
+  const lines = [
+    `**${modpack.display_name}** allowlist state for <@${userId}>:`,
+    ipLine,
+    mcLine,
+  ];
+
+  if (mcError) {
+    lines.push(`\n⚠️ Couldn't resolve \`${mcUsername}\`: ${mcError}\nRetry with \`/allowlist modpack:${modpackName} minecraft_username:${mcUsername}\` once the Mojang API is available.`);
+  }
+
+  if (state?.status === "running" && state.public_ip) {
+    lines.push(`\nConnect: \`${state.public_ip}:25565\` (whitelist syncs within ~60s)`);
+  } else {
+    lines.push(`\nStart the server with \`/start modpack:${modpackName}\`.`);
+  }
 
   return Response.json({
     type: 4,
-    data: {
-      content:
-        `✅ \`${ip}\` added to the **${modpack.display_name}** allowlist.\n` +
-        `Minecraft player: \`${minecraftUsername}\`.` +
-        serverLine,
-      flags: 64,
-    },
+    data: { content: lines.join("\n"), flags: 64 },
   });
 }
 
-async function lookupMinecraftUuid(username: string): Promise<{ name: string; uuid: string } | null> {
+async function lookupMinecraftUuid(
+  username: string,
+): Promise<{ data: { name: string; uuid: string } | null; error: string }> {
   try {
-    const res = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`);
-    if (!res.ok) return null;
-    const data = await res.json() as { id: string; name: string };
-    // Mojang returns UUID without dashes — insert them
+    const res = await fetch(
+      `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username)}`,
+    );
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      const detail = body ? `: ${body.slice(0, 200)}` : "";
+      return { data: null, error: `Mojang API returned HTTP ${res.status}${detail}` };
+    }
+    const data = (await res.json()) as { id: string; name: string };
     const id = data.id;
-    const uuid = `${id.slice(0,8)}-${id.slice(8,12)}-${id.slice(12,16)}-${id.slice(16,20)}-${id.slice(20)}`;
-    return { name: data.name, uuid };
-  } catch {
-    return null;
+    const uuid = `${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`;
+    return { data: { name: data.name, uuid }, error: "" };
+  } catch (e) {
+    return { data: null, error: String(e) };
   }
 }
 

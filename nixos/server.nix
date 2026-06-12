@@ -83,6 +83,8 @@ let
       awscli2
       jq
       curl
+      openssl
+      gawk
     ];
     text = ''
       set -euo pipefail
@@ -93,6 +95,10 @@ let
         -H "X-aws-ec2-metadata-token-ttl-seconds: 60")
       USERDATA=$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
         http://169.254.169.254/latest/user-data 2>/dev/null || echo "{}")
+      INSTANCE_ID=$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
+        http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || echo "")
+      PUBLIC_IP=$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
+        http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "")
 
       RCON_PASSWORD=$(echo   "$USERDATA" | jq -r '.rcon_password // ""')
       S3_BUCKET=$(echo       "$USERDATA" | jq -r '.s3_bucket // "sploosh-minecraft-backups"')
@@ -146,6 +152,21 @@ EOF
       mkdir -p "$SVCDIR"
       if [ ! -f "$SVCDIR/whitelist.json" ]; then
         echo "[]" > "$SVCDIR/whitelist.json"
+      fi
+
+      # Immediately register this instance's public IP with the worker so DNS is
+      # updated without waiting for the 5-minute cron — critical after spot reclaims
+      # where the replacement gets a new IP.
+      if [ -n "$PUBLIC_IP" ] && [ -n "$IDLE_WEBHOOK" ] && [ -n "$WEBHOOK_SECRET" ]; then
+        HEARTBEAT_URL="''${IDLE_WEBHOOK%/idle-shutdown}/server-heartbeat"
+        HMAC=$(printf '%s' "$MODPACK" | \
+          openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | \
+          awk '{print $2}')
+        curl -sf -X POST "$HEARTBEAT_URL" \
+          -H "Content-Type: application/json" \
+          -H "X-Sploosh-Sig: $HMAC" \
+          -d "{\"modpack\":\"$MODPACK\",\"public_ip\":\"$PUBLIC_IP\",\"instance_id\":\"$INSTANCE_ID\"}" \
+          || echo "Heartbeat failed (non-fatal)" >&2
       fi
 
       echo "Bootstrap complete."
