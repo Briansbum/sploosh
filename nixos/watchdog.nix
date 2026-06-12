@@ -51,8 +51,8 @@ let
                 -d "{\"modpack\":\"$SPLOOSH_MODPACK\"}" || true
             fi
 
-            # Stop the final-backup service — ExecStop runs the backup, blocks until done
-            systemctl stop mc-backup-final.service || true
+            # Start the final-backup service — blocks until the backup completes.
+            systemctl start mc-backup-final.service || true
             systemctl poweroff
           fi
         fi

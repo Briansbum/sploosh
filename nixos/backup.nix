@@ -119,6 +119,12 @@ let
     text = ''
       set -euo pipefail
 
+      # Serialise concurrent calls (watchdog + halt.target can both fire).
+      # The loser exits immediately; it does not queue behind the winner.
+      LOCK=/run/minecraft/final-backup.lock
+      exec 200>"$LOCK"
+      flock -n 200 || { echo "mc-backup-final already running — skipping."; exit 0; }
+
       set -a
       # shellcheck source=/dev/null
       source /run/minecraft/env
@@ -185,10 +191,8 @@ let
 
         if [ "$action" = "terminate" ]; then
           echo "Spot termination notice received, saving..."
-          mcrcon ${rconArgs} \
-            "say §cSpot reclaim in 2 minutes — saving world now" || true
-          systemctl start mc-backup-final.service
-          sleep 90
+          # start blocks until ExecStart (the backup) completes, then poweroff.
+          systemctl start mc-backup-final.service || true
           systemctl poweroff
         fi
 
@@ -221,20 +225,20 @@ in
     };
   };
 
-  # Final backup — runs before system shutdown.
+  # Final backup — systemd starts this as part of halt/poweroff/reboot, and
+  # the watchdog/spot handler also call `systemctl start` directly.  The flock
+  # in the script prevents concurrent runs; whoever fires second skips silently.
   systemd.services.mc-backup-final = {
     description = "Minecraft final backup (shutdown)";
-    after = [ "mc-bootstrap.service" "minecraft-server-create-central.service" ];
+    after = [ "mc-bootstrap.service" ];
     requires = [ "mc-bootstrap.service" ];
     before = [ "shutdown.target" "reboot.target" "halt.target" ];
-    wantedBy = [ "multi-user.target" ];
+    wantedBy = [ "halt.target" "reboot.target" "poweroff.target" ];
     unitConfig.DefaultDependencies = false;
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.coreutils}/bin/true";
-      ExecStop = "${finalBackupScript}/bin/mc-backup-final";
-      TimeoutStopSec = "600";
+      ExecStart = "${finalBackupScript}/bin/mc-backup-final";
+      TimeoutStartSec = "600";
       PrivateMounts = true;
     };
   };
