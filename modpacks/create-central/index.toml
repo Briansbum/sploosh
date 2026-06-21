@@ -351,6 +351,11 @@ hash = "f943c276fcebd5542c4b3dda60634728e1a70212f15dc9af8f0b7b9bb40199db"
 metafile = true
 
 [[files]]
+file = "mods/dye-depot.pw.toml"
+hash = "80b348059fd89aa96ada0ccb1ec872ddd8af9898a5cdf47fee4ec021ffb8bb3d"
+metafile = true
+
+[[files]]
 file = "mods/dynamic-trees-biomes-o-plenty.pw.toml"
 hash = "1b89507fb7bc8c2ed11c020a9014ce4a6552e7d0fe0522f6c1107a27e9c89f07"
 metafile = true
