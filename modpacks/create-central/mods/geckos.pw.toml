@@ -1,13 +1,13 @@
 name = "Geckos"
-filename = "geckos-0.1.2+1.21.1-NeoForge.jar"
+filename = "geckos-0.0.7.jar"
 side = "both"
 
 [download]
-url = "https://cdn.modrinth.com/data/pu01XHCl/versions/GWYrEqoW/geckos-0.1.2%2B1.21.1-NeoForge.jar"
+url = "https://cdn.modrinth.com/data/pu01XHCl/versions/x7CHMIIh/geckos-0.0.7.jar"
 hash-format = "sha512"
-hash = "44c35942c0141843cb05670a8c141f83f581831bab3d23dc83f1d8951201486b33d4c8513d176888b8cb2b7645eae067372d1d438cc6f24b72200d09e8eb9427"
+hash = "d070d52a8f287bb334966e1981c6e31b8f99545028ae4ad17c6e16d3033f3e84eb62fcac472385c18f1b8cb1472c49fad4553c2e6e735af34c5c3deb5ac4c4f0"
 
 [update]
 [update.modrinth]
 mod-id = "pu01XHCl"
-version = "GWYrEqoW"
+version = "x7CHMIIh"
