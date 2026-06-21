@@ -3,11 +3,11 @@ filename = "Pattern Texture Pack.zip"
 side = "client"
 
 [download]
-url = "https://cdn.modrinth.com/data/2F04lb0o/versions/nTsNQYft/Pattern%20Texture%20Pack.zip"
+url = "https://cdn.modrinth.com/data/2F04lb0o/versions/DH4NyLyx/Pattern%20Texture%20Pack.zip"
 hash-format = "sha512"
-hash = "ffacd8be2567818ecfb182b79480aee31fa109703fbdaadced282be5a4e6f544d6c5e7f171fef81368d0a79b40051346658e8ae129c7a1425b85e0a501853227"
+hash = "e0069503ac8112905bb47b1e3f94df0ef3fb04c8af461e7a8ff5760eddf79158534309ef95f3fbb34dfd0c812df207d6411e9eeffe545dba117aea9c61c93398"
 
 [update]
 [update.modrinth]
 mod-id = "2F04lb0o"
-version = "nTsNQYft"
+version = "DH4NyLyx"

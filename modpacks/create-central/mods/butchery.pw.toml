@@ -1,13 +1,13 @@
 name = "Butchery"
-filename = "butchery-4.9-neoforge-1.21.1.jar"
+filename = "butchery-5.1-neoforge-1.21.1.jar"
 side = "both"
 
 [download]
-url = "https://cdn.modrinth.com/data/6YfOmC9t/versions/8rWA0MzS/butchery-4.9-neoforge-1.21.1.jar"
+url = "https://cdn.modrinth.com/data/6YfOmC9t/versions/CVh30q4F/butchery-5.1-neoforge-1.21.1.jar"
 hash-format = "sha512"
-hash = "6ac69952bf4ea4816be6cd6d0824fa98715967aba0b8c525097ea08c5a8d2bbd86c4f68487fb4e373ce41a938de75b267af5ff6fa5ce4e184f1e3bbfc42607e3"
+hash = "9dc38255ade1178a2185cbccb694dd3a22138333334032d0591d4ce24b8442ae21108ad61b5f4533805fc8e1ebde9b10d30ed878a331bce5b297c81706bf9d72"
 
 [update]
 [update.modrinth]
 mod-id = "6YfOmC9t"
-version = "8rWA0MzS"
+version = "CVh30q4F"
