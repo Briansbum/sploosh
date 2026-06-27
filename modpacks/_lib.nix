@@ -118,6 +118,12 @@ let
             enforce-whitelist = true;
             difficulty = "normal";
             max-players = 20;
+            # Raise the hang-watchdog ceiling from the default 60s. Sable overworld
+            # sub-level full-saves at shutdown take ~30s (vs <4s incremental) and can
+            # push total no-tick time past 60s, tripping a mid-save SIGKILL that risks
+            # truncating contraption/region writes. 3 min leaves room for slow saves
+            # while still catching a genuine deadlock.
+            max-tick-time = 180000;
             view-distance = 10;
             simulation-distance = 8;
             spawn-protection = 0;
