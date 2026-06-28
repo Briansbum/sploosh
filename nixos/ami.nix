@@ -8,6 +8,7 @@
     ./server.nix
     ./backup.nix
     ./watchdog.nix
+    ./stop-poller.nix
   ];
 
   # ── EC2 basics ─────────────────────────────────────────────────────────────

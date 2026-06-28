@@ -1,5 +1,4 @@
 import { getModpack, getServerState, setServerStatus } from "../db";
-import { deleteFleet } from "../aws/ec2";
 import { checkRateLimit } from "../ratelimit";
 import type { Env } from "../types";
 
@@ -42,20 +41,25 @@ export async function handleStop(
     return Response.json({ type: 4, data: { content: `**${modpack.display_name}** has no active fleet — marked as stopped.`, flags: 64 } });
   }
 
-  try {
-    await deleteFleet(env, state.fleet_id);
-  } catch (e) {
-    return Response.json({
-      type: 4,
-      data: { content: `❌ Failed to stop **${modpack.display_name}**: ${String(e)}`, flags: 64 },
-    });
-  }
-  await setServerStatus(env, modpackName, "stopping", null, null, null);
+  // Don't terminate the fleet here — an external EC2 termination SIGKILLs the
+  // JVM before its shutdown hooks flush the world. Instead just flip status to
+  // "stopping"; the in-instance mc-stop-poller observes this, saves the world
+  // to completion, then calls /idle-shutdown to terminate the fleet once the
+  // save is durable. Preserve fleet/IP fields so that callback can find the
+  // fleet to delete.
+  await setServerStatus(
+    env,
+    modpackName,
+    "stopping",
+    state.instance_id,
+    state.public_ip,
+    state.fleet_id,
+  );
 
   return Response.json({
     type: 4,
     data: {
-      content: `🟠 **${modpack.display_name}** is stopping — final backup will run before shutdown.`,
+      content: `🟠 **${modpack.display_name}** is stopping — saving the world, then shutting down.`,
     },
   });
 }

@@ -21,6 +21,19 @@ export default {
       return handleServerHeartbeat(req, env);
     }
 
+    // GET /api/server-state/:modpack — polled by mc-stop-poller on the instance.
+    // HMAC-signed (X-Sploosh-Sig = HMAC(IDLE_WEBHOOK_SECRET, modpack)), same
+    // scheme as the idle-shutdown and server-heartbeat webhooks.
+    if (req.method === "GET" && url.pathname.startsWith("/api/server-state/")) {
+      const modpack = url.pathname.slice("/api/server-state/".length);
+      const sig = req.headers.get("X-Sploosh-Sig") ?? "";
+      if (!(await verifyHmac(env, sig, modpack))) {
+        return new Response("unauthorized", { status: 401 });
+      }
+      const state = await getServerState(env, modpack);
+      return Response.json({ status: state?.status ?? "stopped" });
+    }
+
     // GET /api/whitelist/:modpack — consumed by mc-sync-whitelist on the instance
     if (req.method === "GET" && url.pathname.startsWith("/api/whitelist/")) {
       const modpack = url.pathname.slice("/api/whitelist/".length);

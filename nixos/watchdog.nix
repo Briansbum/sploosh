@@ -40,7 +40,15 @@ let
           if [ "$idle" -ge "$IDLE_THRESHOLD" ]; then
             echo "Server idle for $IDLE_MINUTES minutes — shutting down."
 
-            # Notify the CF worker so it marks the server stopped immediately
+            # Save the world to completion FIRST — blocks until the JVM shutdown
+            # hooks flush and the restic snapshot is taken. Only after the save
+            # is durable do we notify the worker to terminate the fleet; doing it
+            # the other way round races an external EC2 termination against the
+            # save (SIGKILLing the JVM mid-flush), the same bug /stop had.
+            systemctl start mc-backup-final.service || true
+
+            # Notify the CF worker — deletes the fleet (safe now) and marks
+            # the server stopped.
             if [ -n "$WORKER_IDLE_WEBHOOK" ]; then
               HMAC=$(echo -n "$SPLOOSH_MODPACK" | \
                 openssl dgst -sha256 -hmac "$WORKER_WEBHOOK_SECRET" | \
@@ -51,8 +59,6 @@ let
                 -d "{\"modpack\":\"$SPLOOSH_MODPACK\"}" || true
             fi
 
-            # Start the final-backup service — blocks until the backup completes.
-            systemctl start mc-backup-final.service || true
             systemctl poweroff
           fi
         fi
