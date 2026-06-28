@@ -1,6 +1,8 @@
 [
   {"name": "Briansbum",        "uuid": "1e550e8e-c562-4db9-a279-3b1249831fd4", "op": 4},
-  {"name": "DrSugar",          "uuid": "88bf086b-9469-47d8-b81e-0810edfc71ae", "op": 4},
   {"name": "EvilSpaceChicken", "uuid": "24182e0b-3089-4aec-9bd5-71bb95010607", "op": 4},
-  {"name": "TouristicRobin",   "uuid": "eb4b2781-500a-4705-9ab0-5cb02739cdd3", "op": 0}
+  {"name": "DrSugar",          "uuid": "88bf086b-9469-47d8-b81e-0810edfc71ae", "op": 4},
+  {"name": "Flappymoto",       "uuid": "2e57610d-65be-4d57-a38b-34509e1a2d89", "op": 2},
+  {"name": "Rainbowcloud_",    "uuid": "c82e773c-d13b-43f2-973e-775db0cd61d2", "op": 2},
+  {"name": "TouristicRobin",   "uuid": "eb4b2781-500a-4705-9ab0-5cb02739cdd3", "op": 2}
 ]
