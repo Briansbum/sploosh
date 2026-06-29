@@ -45,13 +45,13 @@ dynamic:
   dynamic-settings:
     - setting: 'CHUNK_TICK_DISTANCE'
       max: 200
-      min: 32
+      min: 20
       increment: 1
       interval: 15
 
     - setting: 'SIMULATION_DISTANCE'
       max: 200
-      min: 32
+      min: 20
       increment: 1
       interval: 15
 
