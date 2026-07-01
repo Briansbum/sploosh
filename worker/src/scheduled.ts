@@ -44,6 +44,15 @@ async function reconcileServers(env: Env): Promise<void> {
         console.error(`DNS update failed for ${mp.name}:`, e),
       );
 
+      // A /stop is in flight: the fleet is intentionally still healthy (the new
+      // design never terminates from the worker — the in-instance mc-stop-poller
+      // saves the world, then calls /idle-shutdown to delete the fleet). Leave
+      // the "stopping" status alone; flipping it back to "running" here races
+      // the poller and silently cancels the stop.
+      if (state?.status === "stopping") {
+        continue;
+      }
+
       const instanceChanged =
         state?.status !== "running" || state.instance_id !== instance.instanceId;
 

@@ -92,7 +92,7 @@ async function handleIdleShutdown(req: Request, env: Env): Promise<Response> {
   if (state?.fleet_id) {
     await deleteFleet(env, state.fleet_id).catch(() => {});
   }
-  await setServerStatus(env, modpack, "stopping", null, null, null);
+  await setServerStatus(env, modpack, "stopped", null, null, null);
 
   return new Response("ok");
 }
