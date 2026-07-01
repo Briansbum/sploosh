@@ -2,7 +2,7 @@
 // Reconciles server_state against EC2 Fleet/DescribeInstances. Allowlist
 // entries no longer expire — /revoke is the only way to remove them.
 import { listModpacks, getServerState, setServerStatus } from "./db";
-import { getFleetInstance, describeFleet, revokeSgIngress, authorizeSgIngress } from "./aws/ec2";
+import { getFleetInstance, describeFleet, deleteFleet, revokeSgIngress, authorizeSgIngress } from "./aws/ec2";
 import { setARecord } from "./cloudflare/dns";
 import type { Env } from "./types";
 
@@ -44,12 +44,18 @@ async function reconcileServers(env: Env): Promise<void> {
         console.error(`DNS update failed for ${mp.name}:`, e),
       );
 
-      // A /stop is in flight: the fleet is intentionally still healthy (the new
-      // design never terminates from the worker — the in-instance mc-stop-poller
-      // saves the world, then calls /idle-shutdown to delete the fleet). Leave
-      // the "stopping" status alone; flipping it back to "running" here races
-      // the poller and silently cancels the stop.
+      // A /stop is in flight. If this is still the original instance, its
+      // in-instance mc-stop-poller is saving the world and will call
+      // /idle-shutdown when the save is durable — leave it alone (deleting the
+      // fleet here would SIGKILL the save, the bug this whole flow avoids).
+      // But if the fleet has already replaced the instance, the original is
+      // gone and the spot fleet keeps launching replacements that would flip us
+      // back to "running" via /server-heartbeat. Terminate the fleet now.
       if (state?.status === "stopping") {
+        if (state.instance_id && instance.instanceId !== state.instance_id) {
+          await deleteFleet(env, state.fleet_id).catch(() => {});
+          await setServerStatus(env, mp.name, "stopped", null, null, null);
+        }
         continue;
       }
 

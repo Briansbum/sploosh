@@ -120,6 +120,19 @@ async function handleServerHeartbeat(req: Request, env: Env): Promise<Response> 
     return new Response("no active fleet", { status: 409 });
   }
 
+  // A stop is in flight. This heartbeat is from a *replacement* instance the
+  // spot fleet launched after the stopping instance was terminated — the fleet
+  // still has target capacity, so AWS keeps replacing it. If we marked it
+  // "running" here the stop would silently undo itself. Instead, treat the
+  // heartbeat as the signal that the old instance is gone and tear the fleet
+  // down now. The replacement only restored the last snapshot; it has no
+  // in-progress world state worth saving.
+  if (state.status === "stopping") {
+    await deleteFleet(env, state.fleet_id).catch(() => {});
+    await setServerStatus(env, modpack, "stopped", null, null, null);
+    return new Response("stopping — fleet terminated", { status: 409 });
+  }
+
   await setServerStatus(
     env,
     modpack,
